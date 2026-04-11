@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -11,12 +12,21 @@ import (
 )
 
 func main() {
-	conn, _ := pgxpool.New(context.Background(), "postgres://root:root@localhost:5433/system_db")
-	q := db.New(conn)
+	conn, err := pgxpool.New(context.Background(), "postgres://root:root@localhost:5433/system_db")
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+	defer conn.Close()
+	log.Println("connected to database")
 
+	q := db.New(conn)
 	service := service.NewScenarioService(q)
 	handler := handler.NewScenarioHandler(service)
-	http.HandleFunc("/scenarios/", handler.GetScenario)
-	http.ListenAndServe(":8080", nil)
 
+	http.HandleFunc("/scenarios/", handler.GetScenario)
+
+	log.Println("server running on :8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatalf("server error: %v", err)
+	}
 }
