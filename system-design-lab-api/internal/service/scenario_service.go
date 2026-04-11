@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/kidkender/system-design-lab/internal/db"
 
 	"github.com/kidkender/system-design-lab/internal/handler/dto"
@@ -15,6 +17,23 @@ type ScenarioService struct {
 
 func NewScenarioService(q *db.Queries) *ScenarioService {
 	return &ScenarioService{q: q}
+}
+
+func (s *ScenarioService) CreateScenario(ctx context.Context, req *dto.CreateScenarioRequest) {
+	scenario, err := s.q.CreateScenario(
+		ctx,
+		db.CreateScenarioParams{
+			ID:          uuid.New(),
+			Title:       req.Title,
+			Description: pgtype.Text{String: req.Description, Valid: true},
+			Difficulty:  db.DifficultyLevel(req.Difficulty),
+		},
+	)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("Scenario %s created\n", scenario.ID)
 }
 
 func (s *ScenarioService) GetScenario(ctx context.Context, id uuid.UUID) (*dto.ScenarioResponse, error) {
