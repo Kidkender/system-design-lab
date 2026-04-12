@@ -143,3 +143,64 @@ func (s *ScenarioService) GetScenario(ctx context.Context, id uuid.UUID) (*dto.S
 	return resp, nil
 
 }
+
+func (s *ScenarioService) GetScenarios(ctx context.Context) ([]dto.ScenarioResponse, error) {
+	scenarios, err := s.q.GetScenarios(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := []dto.ScenarioResponse{}
+	for _, sc := range scenarios {
+		resp = append(resp, dto.ScenarioResponse{
+			ID:          sc.ID.String(),
+			Title:       sc.Title,
+			Description: sc.Description.String,
+		})
+	}
+	return resp, nil
+}
+
+func (s *ScenarioService) GetScenariosPaginated(
+	ctx context.Context, page int32, limit int32,
+) (*dto.PaginationResponse[dto.ScenarioResponse], error) {
+	if page < 0 {
+		page = 0
+	}
+
+	if limit < 0 {
+		limit = 0
+	}
+
+	fmt.Printf("page: %d, limit: %d\n", page, limit)
+	offset := (page - 1) * limit
+	scenarios, err := s.q.ListScenariosPaginated(ctx, db.ListScenariosPaginatedParams{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]dto.ScenarioResponse, 0, len(scenarios))
+
+	for _, sc := range scenarios {
+		data = append(data, dto.ScenarioResponse{
+			ID:          sc.ID.String(),
+			Title:       sc.Title,
+			Description: sc.Description.String,
+			// Steps: s,
+		})
+	}
+	totalPages := (int32(len(scenarios)) + limit - 1) / limit
+
+	return &dto.PaginationResponse[dto.ScenarioResponse]{
+		Data:       data,
+		Total:      int32(len(scenarios)),
+		Page:       page,
+		Limit:      limit,
+		TotalPages: int32(totalPages),
+	}, nil
+
+}

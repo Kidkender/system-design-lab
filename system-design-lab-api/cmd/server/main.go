@@ -23,8 +23,9 @@ func main() {
 	service := service.NewScenarioService(q)
 	handler := handler.NewScenarioHandler(service)
 
-	http.HandleFunc("GET /scenarios/", handler.GetScenario)
+	http.HandleFunc("GET /scenarios", handler.GetScenariosPaginated)
 	http.HandleFunc("POST /scenarios", handler.CreateScenario)
+	http.HandleFunc("GET /scenarios/{id}", handler.GetScenario)
 
 	log.Println("server running on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

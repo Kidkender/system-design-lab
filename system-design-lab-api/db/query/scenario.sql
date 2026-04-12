@@ -16,6 +16,13 @@ SELECT
     start_step_id
 FROM scenarios
 ORDER BY created_at DESC;
+
+-- name: ListScenariosPaginated :many
+SELECT *
+FROM scenarios
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;
+
 -- name: CreateScenario :one
 
 INSERT INTO scenarios (id, title, description, difficulty)

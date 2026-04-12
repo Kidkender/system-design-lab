@@ -2,7 +2,9 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -16,6 +18,24 @@ type ScenarioHandler struct {
 
 func NewScenarioHandler(s *service.ScenarioService) *ScenarioHandler {
 	return &ScenarioHandler{service: s}
+}
+
+func (h *ScenarioHandler) GetScenariosPaginated(w http.ResponseWriter, r *http.Request) {
+	pageStr := r.URL.Query().Get("page")
+	limitStr := r.URL.Query().Get("limit")
+
+	fmt.Printf("page: %s, limit: %s\n", pageStr, limitStr)
+	page, _ := strconv.Atoi(pageStr)
+	limit, _ := strconv.Atoi(limitStr)
+
+	resp, err := h.service.GetScenariosPaginated(r.Context(), int32(page), int32(limit))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *ScenarioHandler) CreateScenario(w http.ResponseWriter, r *http.Request) {

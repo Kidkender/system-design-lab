@@ -135,6 +135,45 @@ func (q *Queries) GetScenarios(ctx context.Context) ([]GetScenariosRow, error) {
 	return items, nil
 }
 
+const listScenariosPaginated = `-- name: ListScenariosPaginated :many
+SELECT id, title, description, start_step_id, difficulty, created_at
+FROM scenarios
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListScenariosPaginatedParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) ListScenariosPaginated(ctx context.Context, arg ListScenariosPaginatedParams) ([]Scenario, error) {
+	rows, err := q.db.Query(ctx, listScenariosPaginated, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Scenario
+	for rows.Next() {
+		var i Scenario
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.StartStepID,
+			&i.Difficulty,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateScenario = `-- name: UpdateScenario :one
 
 UPDATE scenarios
