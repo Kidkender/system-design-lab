@@ -68,3 +68,9 @@ func (h *ScenarioHandler) GetScenario(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
+
+func (h *ScenarioHandler) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /scenarios", h.GetScenariosPaginated)
+	mux.HandleFunc("POST /scenarios", h.CreateScenario)
+	mux.HandleFunc("GET /scenarios/{id}", h.GetScenario)
+}

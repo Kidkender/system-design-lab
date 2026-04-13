@@ -92,6 +92,90 @@ func (q *Queries) GetStepsByScenario(ctx context.Context, dollar_1 uuid.UUID) ([
 	return items, nil
 }
 
+const getStepsByScenarioPaginated = `-- name: GetStepsByScenarioPaginated :many
+SELECT
+    id,
+    question,
+    context
+FROM steps
+WHERE scenario_id = $1::uuid
+ORDER BY order_index
+LIMIT $2 OFFSET $3
+`
+
+type GetStepsByScenarioPaginatedParams struct {
+	Column1 uuid.UUID
+	Limit   int32
+	Offset  int32
+}
+
+type GetStepsByScenarioPaginatedRow struct {
+	ID       uuid.UUID
+	Question string
+	Context  pgtype.Text
+}
+
+func (q *Queries) GetStepsByScenarioPaginated(ctx context.Context, arg GetStepsByScenarioPaginatedParams) ([]GetStepsByScenarioPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, getStepsByScenarioPaginated, arg.Column1, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetStepsByScenarioPaginatedRow
+	for rows.Next() {
+		var i GetStepsByScenarioPaginatedRow
+		if err := rows.Scan(&i.ID, &i.Question, &i.Context); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getStepsPaginated = `-- name: GetStepsPaginated :many
+SELECT
+    id,
+    question,
+    context
+FROM steps
+ORDER BY order_index
+LIMIT $1 OFFSET $2
+`
+
+type GetStepsPaginatedParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type GetStepsPaginatedRow struct {
+	ID       uuid.UUID
+	Question string
+	Context  pgtype.Text
+}
+
+func (q *Queries) GetStepsPaginated(ctx context.Context, arg GetStepsPaginatedParams) ([]GetStepsPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, getStepsPaginated, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetStepsPaginatedRow
+	for rows.Next() {
+		var i GetStepsPaginatedRow
+		if err := rows.Scan(&i.ID, &i.Question, &i.Context); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateStep = `-- name: UpdateStep :one
 UPDATE steps
 SET question = $2, context = $3, order_index = $4

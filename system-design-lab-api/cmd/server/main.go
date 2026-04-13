@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -14,21 +14,24 @@ import (
 func main() {
 	conn, err := pgxpool.New(context.Background(), "postgres://root:root@localhost:5433/system_db")
 	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		slog.Error("failed to connect to database", "error", err)
 	}
 	defer conn.Close()
-	log.Println("connected to database")
+	slog.Info("connected to database")
+
+	mux := http.NewServeMux()
 
 	q := db.New(conn)
-	service := service.NewScenarioService(q)
-	handler := handler.NewScenarioHandler(service)
+	scenarioService := service.NewScenarioService(q)
+	scenarioHandler := handler.NewScenarioHandler(scenarioService)
+	stepService := service.NewStepService(q)
+	stepHandler := handler.NewStepHandler(stepService)
 
-	http.HandleFunc("GET /scenarios", handler.GetScenariosPaginated)
-	http.HandleFunc("POST /scenarios", handler.CreateScenario)
-	http.HandleFunc("GET /scenarios/{id}", handler.GetScenario)
+	scenarioHandler.RegisterRoutes(mux)
+	stepHandler.RegisterRoutes(mux)
 
-	log.Println("server running on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatalf("server error: %v", err)
+	slog.Info("server running on :8080")
+	if err := http.ListenAndServe(":8080", mux); err != nil {
+		slog.Error("server error", "error", err)
 	}
 }

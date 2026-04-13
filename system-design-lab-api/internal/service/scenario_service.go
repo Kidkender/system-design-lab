@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -30,10 +30,10 @@ func (s *ScenarioService) CreateScenario(ctx context.Context, req *dto.CreateSce
 		},
 	)
 	if err != nil {
-		fmt.Println(err)
+		slog.Error("Failed to create scenario", "error", err)
 	}
 
-	fmt.Printf("Scenario %s created\n", scenario.ID)
+	slog.Info("Scenario %s created", "id", scenario.ID)
 }
 
 func (s *ScenarioService) GetScenario(ctx context.Context, id uuid.UUID) (*dto.ScenarioResponse, error) {
@@ -165,14 +165,13 @@ func (s *ScenarioService) GetScenariosPaginated(
 	ctx context.Context, page int32, limit int32,
 ) (*dto.PaginationResponse[dto.ScenarioResponse], error) {
 	if page < 0 {
-		page = 0
+		page = 1
 	}
 
 	if limit < 0 {
-		limit = 0
+		limit = 10
 	}
 
-	fmt.Printf("page: %d, limit: %d\n", page, limit)
 	offset := (page - 1) * limit
 	scenarios, err := s.q.ListScenariosPaginated(ctx, db.ListScenariosPaginatedParams{
 		Limit:  int32(limit),

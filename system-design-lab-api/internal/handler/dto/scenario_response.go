@@ -21,13 +21,6 @@ type ChoiceResponse struct {
 	Explanations map[string]string      `json:"explanations"`
 }
 
-type StepResponse struct {
-	ID       string           `json:"id"`
-	Question string           `json:"question"`
-	Context  *string          `json:"context"`
-	Choices  []ChoiceResponse `json:"choices"`
-}
-
 type ScenarioResponse struct {
 	ID          string         `json:"id"`
 	Title       string         `json:"title"`
