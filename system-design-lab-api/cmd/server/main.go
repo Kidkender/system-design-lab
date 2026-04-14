@@ -6,9 +6,7 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kidkender/system-design-lab/internal/db"
-	"github.com/kidkender/system-design-lab/internal/handler"
-	"github.com/kidkender/system-design-lab/internal/service"
+	"github.com/kidkender/system-design-lab/internal/app"
 )
 
 func main() {
@@ -21,14 +19,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	q := db.New(conn)
-	scenarioService := service.NewScenarioService(q)
-	scenarioHandler := handler.NewScenarioHandler(scenarioService)
-	stepService := service.NewStepService(q)
-	stepHandler := handler.NewStepHandler(stepService)
-
-	scenarioHandler.RegisterRoutes(mux)
-	stepHandler.RegisterRoutes(mux)
+	container := app.NewContainer(conn)
+	container.RegisterRoutes(mux)
 
 	slog.Info("server running on :8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {
