@@ -31,8 +31,8 @@ func (s *StepService) CreateStep(ctx context.Context, req *dto.CreateStepRequest
 	}
 
 	step, err := s.q.CreateStep(ctx, db.CreateStepParams{
-		Column1:    uuid.New(),
-		Column2:    scenarioID,
+		ID:         uuid.New(),
+		ScenarioID: scenarioID,
 		Question:   req.Question,
 		Context:    pgtype.Text{String: *req.Context, Valid: req.Context != nil},
 		OrderIndex: req.OrderIndex,

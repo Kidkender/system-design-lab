@@ -18,8 +18,8 @@ RETURNING id, step_id, label, next_step_id, is_correct, created_at
 `
 
 type CreateChoiceParams struct {
-	Column1    uuid.UUID
-	Column2    uuid.UUID
+	ID         uuid.UUID
+	StepID     uuid.UUID
 	Label      string
 	NextStepID uuid.UUID
 	IsCorrect  bool
@@ -27,8 +27,8 @@ type CreateChoiceParams struct {
 
 func (q *Queries) CreateChoice(ctx context.Context, arg CreateChoiceParams) (Choice, error) {
 	row := q.db.QueryRow(ctx, createChoice,
-		arg.Column1,
-		arg.Column2,
+		arg.ID,
+		arg.StepID,
 		arg.Label,
 		arg.NextStepID,
 		arg.IsCorrect,

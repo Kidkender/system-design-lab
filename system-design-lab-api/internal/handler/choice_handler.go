@@ -1,0 +1,45 @@
+package handler
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/kidkender/system-design-lab/internal/handler/dto"
+	"github.com/kidkender/system-design-lab/internal/service"
+	v "github.com/kidkender/system-design-lab/internal/validator"
+)
+
+type ChoiceHandler struct {
+	service *service.ChoiceService
+}
+
+func NewChoiceHandler(s *service.ChoiceService) *ChoiceHandler {
+	return &ChoiceHandler{service: s}
+}
+
+func (h *ChoiceHandler) CreateChoice(w http.ResponseWriter, r *http.Request) {
+	var req dto.CreateChoiceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+
+	if err := v.ValidateStruct(req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	resp, err := h.service.CreateChoice(r.Context(), &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *ChoiceHandler) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("POST /choices", h.CreateChoice)
+}

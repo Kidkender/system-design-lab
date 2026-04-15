@@ -26,13 +26,18 @@ FROM steps
 ORDER BY order_index
 LIMIT $1 OFFSET $2;
 
+-- name: GetStep :one
+SELECT id, scenario_id, question, context, order_index
+FROM steps
+WHERE id = $1::uuid;
+
 -- name: DeleteStep :exec
 DELETE FROM steps
 WHERE id = $1::uuid;
 
 -- name: CreateStep :one
 INSERT INTO steps (id, scenario_id, question, context, order_index)
-VALUES ($1::uuid, $2::uuid, $3, $4, $5)
+VALUES (@id::uuid, @scenario_id::uuid, @question, @context, @order_index)
 RETURNING *;
 
 -- name: UpdateStep :one

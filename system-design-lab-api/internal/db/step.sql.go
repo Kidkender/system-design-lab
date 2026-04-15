@@ -19,8 +19,8 @@ RETURNING id, scenario_id, question, context, order_index, created_at
 `
 
 type CreateStepParams struct {
-	Column1    uuid.UUID
-	Column2    uuid.UUID
+	ID         uuid.UUID
+	ScenarioID uuid.UUID
 	Question   string
 	Context    pgtype.Text
 	OrderIndex int32
@@ -28,8 +28,8 @@ type CreateStepParams struct {
 
 func (q *Queries) CreateStep(ctx context.Context, arg CreateStepParams) (Step, error) {
 	row := q.db.QueryRow(ctx, createStep,
-		arg.Column1,
-		arg.Column2,
+		arg.ID,
+		arg.ScenarioID,
 		arg.Question,
 		arg.Context,
 		arg.OrderIndex,
@@ -54,6 +54,54 @@ WHERE id = $1::uuid
 func (q *Queries) DeleteStep(ctx context.Context, dollar_1 uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteStep, dollar_1)
 	return err
+}
+
+const existsStepOrderIndex = `-- name: ExistsStepOrderIndex :one
+SELECT EXISTS(
+    SELECT 1
+    FROM steps
+    WHERE scenario_id = $1::uuid
+    AND order_index = $2
+)
+`
+
+type ExistsStepOrderIndexParams struct {
+	Column1    uuid.UUID
+	OrderIndex int32
+}
+
+func (q *Queries) ExistsStepOrderIndex(ctx context.Context, arg ExistsStepOrderIndexParams) (bool, error) {
+	row := q.db.QueryRow(ctx, existsStepOrderIndex, arg.Column1, arg.OrderIndex)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const getStep = `-- name: GetStep :one
+SELECT id, scenario_id, question, context, order_index
+FROM steps
+WHERE id = $1::uuid
+`
+
+type GetStepRow struct {
+	ID         uuid.UUID
+	ScenarioID uuid.UUID
+	Question   string
+	Context    pgtype.Text
+	OrderIndex int32
+}
+
+func (q *Queries) GetStep(ctx context.Context, dollar_1 uuid.UUID) (GetStepRow, error) {
+	row := q.db.QueryRow(ctx, getStep, dollar_1)
+	var i GetStepRow
+	err := row.Scan(
+		&i.ID,
+		&i.ScenarioID,
+		&i.Question,
+		&i.Context,
+		&i.OrderIndex,
+	)
+	return i, err
 }
 
 const getStepsByScenario = `-- name: GetStepsByScenario :many
@@ -174,6 +222,23 @@ func (q *Queries) GetStepsPaginated(ctx context.Context, arg GetStepsPaginatedPa
 		return nil, err
 	}
 	return items, nil
+}
+
+const setStartStepIfNull = `-- name: SetStartStepIfNull :exec
+UPDATE scenarios 
+SET start_step_id = $2
+WHERE id = $1::uuid
+    AND start_step_id IS NULL
+`
+
+type SetStartStepIfNullParams struct {
+	Column1     uuid.UUID
+	StartStepID uuid.UUID
+}
+
+func (q *Queries) SetStartStepIfNull(ctx context.Context, arg SetStartStepIfNullParams) error {
+	_, err := q.db.Exec(ctx, setStartStepIfNull, arg.Column1, arg.StartStepID)
+	return err
 }
 
 const updateStep = `-- name: UpdateStep :one

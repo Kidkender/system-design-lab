@@ -26,7 +26,7 @@ WHERE id = $1::uuid;
 
 -- name: CreateChoice :one
 INSERT INTO choices (id, step_id, label, next_step_id, is_correct)
-VALUES ($1::uuid, $2::uuid, $3, $4, $5)
+VALUES (@id::uuid, @step_id::uuid, @label, @next_step_id, @is_correct)
 RETURNING *;
 
 -- name: UpdateChoice :one
