@@ -35,6 +35,9 @@ SET title = $2, description = $3, start_step_id = $4, difficulty = $5
 WHERE id = $1::uuid
 RETURNING id, title, description, start_step_id, difficulty;
 
+-- name: CountScenarios :one
+SELECT COUNT(*) FROM scenarios;
+
 -- name: DeleteScenario :exec
 DELETE FROM scenarios
 WHERE id = $1::uuid;

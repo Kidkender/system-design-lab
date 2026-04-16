@@ -10,10 +10,14 @@ import (
 )
 
 type Container struct {
-	ScenarioHandler *handler.ScenarioHandler
-	StepHandler     *handler.StepHandler
-	ChoiceHandler   *handler.ChoiceHandler
-	SessionHandler  *handler.SessionHandler
+	ScenarioHandler    *handler.ScenarioHandler
+	StepHandler        *handler.StepHandler
+	ChoiceHandler      *handler.ChoiceHandler
+	SessionHandler     *handler.SessionHandler
+	ImpactHandler      *handler.ImpactHandler
+	ExplanationHandler *handler.ExplanationHandler
+	ConsequenceHandler *handler.ConsequenceHandler
+	ConditionHandler   *handler.ConditionHandler
 }
 
 func NewContainer(conn *pgxpool.Pool) *Container {
@@ -22,13 +26,21 @@ func NewContainer(conn *pgxpool.Pool) *Container {
 	scenarioService := service.NewScenarioService(q)
 	stepService := service.NewStepService(q)
 	choiceService := service.NewChoiceService(q)
-	sessionService := service.NewSessionService(q)
+	sessionService := service.NewSessionService(q, conn)
+	impactService := service.NewImpactService(q)
+	explanationService := service.NewExplanationService(q)
+	consequenceService := service.NewConsequenceService(q)
+	conditionService := service.NewConditionService(q)
 
 	return &Container{
-		ScenarioHandler: handler.NewScenarioHandler(scenarioService),
-		StepHandler:     handler.NewStepHandler(stepService),
-		ChoiceHandler:   handler.NewChoiceHandler(choiceService),
-		SessionHandler:  handler.NewSessionHandler(sessionService),
+		ScenarioHandler:    handler.NewScenarioHandler(scenarioService),
+		StepHandler:        handler.NewStepHandler(stepService),
+		ChoiceHandler:      handler.NewChoiceHandler(choiceService),
+		SessionHandler:     handler.NewSessionHandler(sessionService),
+		ImpactHandler:      handler.NewImpactHandler(impactService),
+		ExplanationHandler: handler.NewExplanationHandler(explanationService),
+		ConsequenceHandler: handler.NewConsequenceHandler(consequenceService),
+		ConditionHandler:   handler.NewConditionHandler(conditionService),
 	}
 }
 
@@ -39,6 +51,10 @@ func (c *Container) RegisterRoutes(mux *http.ServeMux) {
 	c.StepHandler.RegisterRoutes(apiMux)
 	c.ChoiceHandler.RegisterRoutes(apiMux)
 	c.SessionHandler.RegisterRoutes(apiMux)
+	c.ImpactHandler.RegisterRoutes(apiMux)
+	c.ExplanationHandler.RegisterRoutes(apiMux)
+	c.ConsequenceHandler.RegisterRoutes(apiMux)
+	c.ConditionHandler.RegisterRoutes(apiMux)
 
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", apiMux))
 }

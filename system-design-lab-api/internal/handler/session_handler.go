@@ -70,7 +70,43 @@ func (h *SessionHandler) SubmitChoice(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
+	sessionID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "invalid session id", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := h.service.GetSession(r.Context(), sessionID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *SessionHandler) GetSessionSummary(w http.ResponseWriter, r *http.Request) {
+	sessionID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "invalid session id", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := h.service.GetSessionSummary(r.Context(), sessionID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
 func (h *SessionHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /sessions", h.StartSession)
+	mux.HandleFunc("GET /sessions/{id}", h.GetSession)
 	mux.HandleFunc("POST /sessions/{id}/submit", h.SubmitChoice)
+	mux.HandleFunc("GET /sessions/{id}/summary", h.GetSessionSummary)
 }

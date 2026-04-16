@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/kidkender/system-design-lab/internal/handler/dto"
@@ -31,7 +32,11 @@ func (h *ChoiceHandler) CreateChoice(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.service.CreateChoice(r.Context(), &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Error("create choice failed",
+			"error", err,
+			"step_id", req.StepID,
+		)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 

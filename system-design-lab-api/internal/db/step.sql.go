@@ -12,6 +12,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countSteps = `-- name: CountSteps :one
+SELECT COUNT(*) FROM steps
+`
+
+func (q *Queries) CountSteps(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countSteps)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createStep = `-- name: CreateStep :one
 INSERT INTO steps (id, scenario_id, question, context, order_index)
 VALUES ($1::uuid, $2::uuid, $3, $4, $5)
@@ -19,8 +30,8 @@ RETURNING id, scenario_id, question, context, order_index, created_at
 `
 
 type CreateStepParams struct {
-	ID         uuid.UUID
-	ScenarioID uuid.UUID
+	Column1    uuid.UUID
+	Column2    uuid.UUID
 	Question   string
 	Context    pgtype.Text
 	OrderIndex int32
@@ -28,8 +39,8 @@ type CreateStepParams struct {
 
 func (q *Queries) CreateStep(ctx context.Context, arg CreateStepParams) (Step, error) {
 	row := q.db.QueryRow(ctx, createStep,
-		arg.ID,
-		arg.ScenarioID,
+		arg.Column1,
+		arg.Column2,
 		arg.Question,
 		arg.Context,
 		arg.OrderIndex,
@@ -78,7 +89,12 @@ func (q *Queries) ExistsStepOrderIndex(ctx context.Context, arg ExistsStepOrderI
 }
 
 const getStep = `-- name: GetStep :one
-SELECT id, scenario_id, question, context, order_index
+SELECT
+    id,
+    scenario_id,
+    question,
+    context,
+    order_index
 FROM steps
 WHERE id = $1::uuid
 `
@@ -105,7 +121,6 @@ func (q *Queries) GetStep(ctx context.Context, dollar_1 uuid.UUID) (GetStepRow, 
 }
 
 const getStepsByScenario = `-- name: GetStepsByScenario :many
-
 SELECT
     id,
     question,
@@ -225,9 +240,10 @@ func (q *Queries) GetStepsPaginated(ctx context.Context, arg GetStepsPaginatedPa
 }
 
 const setStartStepIfNull = `-- name: SetStartStepIfNull :exec
-UPDATE scenarios 
+UPDATE scenarios
 SET start_step_id = $2
-WHERE id = $1::uuid
+WHERE
+    id = $1::uuid
     AND start_step_id IS NULL
 `
 

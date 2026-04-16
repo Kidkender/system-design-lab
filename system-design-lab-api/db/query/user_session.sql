@@ -20,3 +20,9 @@ RETURNING *;
 INSERT INTO user_choices (id, session_id, step_id, choice_id)
 VALUES (@id::uuid, @session_id::uuid, @step_id::uuid, @choice_id::uuid)
 RETURNING *;
+
+-- name: GetUserChoicesBySession :many
+SELECT id, session_id, step_id, choice_id, created_at
+FROM user_choices
+WHERE session_id = $1::uuid
+ORDER BY created_at;

@@ -173,30 +173,33 @@ func (s *ScenarioService) GetScenariosPaginated(
 	}
 
 	offset := (page - 1) * limit
+	total, err := s.q.CountScenarios(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	scenarios, err := s.q.ListScenariosPaginated(ctx, db.ListScenariosPaginatedParams{
 		Limit:  int32(limit),
 		Offset: int32(offset),
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
 	data := make([]dto.ScenarioResponse, 0, len(scenarios))
-
 	for _, sc := range scenarios {
 		data = append(data, dto.ScenarioResponse{
 			ID:          sc.ID.String(),
 			Title:       sc.Title,
 			Description: sc.Description.String,
-			// Steps: s,
 		})
 	}
-	totalPages := (int32(len(scenarios)) + limit - 1) / limit
+
+	totalPages := (total + int64(limit) - 1) / int64(limit)
 
 	return &dto.PaginationResponse[dto.ScenarioResponse]{
 		Data:       data,
-		Total:      int32(len(scenarios)),
+		Total:      int32(total),
 		Page:       page,
 		Limit:      limit,
 		TotalPages: int32(totalPages),

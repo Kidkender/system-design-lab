@@ -80,6 +80,39 @@ func (q *Queries) CreateUserSession(ctx context.Context, arg CreateUserSessionPa
 	return i, err
 }
 
+const getUserChoicesBySession = `-- name: GetUserChoicesBySession :many
+SELECT id, session_id, step_id, choice_id, created_at
+FROM user_choices
+WHERE session_id = $1::uuid
+ORDER BY created_at
+`
+
+func (q *Queries) GetUserChoicesBySession(ctx context.Context, dollar_1 uuid.UUID) ([]UserChoice, error) {
+	rows, err := q.db.Query(ctx, getUserChoicesBySession, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []UserChoice
+	for rows.Next() {
+		var i UserChoice
+		if err := rows.Scan(
+			&i.ID,
+			&i.SessionID,
+			&i.StepID,
+			&i.ChoiceID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserSession = `-- name: GetUserSession :one
 SELECT id, user_id, scenario_id, current_step_id, metrics, flags, status, created_at FROM user_sessions
 WHERE id = $1::uuid

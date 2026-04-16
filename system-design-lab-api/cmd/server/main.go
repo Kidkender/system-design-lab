@@ -6,7 +6,11 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/kidkender/system-design-lab/docs"
 	"github.com/kidkender/system-design-lab/internal/app"
+	"github.com/kidkender/system-design-lab/internal/middleware"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func main() {
@@ -18,12 +22,13 @@ func main() {
 	slog.Info("connected to database")
 
 	mux := http.NewServeMux()
-
+	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 	container := app.NewContainer(conn)
 	container.RegisterRoutes(mux)
 
+	loggedMux := middleware.LoggingMiddleware(mux)
 	slog.Info("server running on :8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	if err := http.ListenAndServe(":8080", loggedMux); err != nil {
 		slog.Error("server error", "error", err)
 	}
 }

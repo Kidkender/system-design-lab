@@ -12,6 +12,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countScenarios = `-- name: CountScenarios :one
+SELECT COUNT(*) FROM scenarios
+`
+
+func (q *Queries) CountScenarios(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countScenarios)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createScenario = `-- name: CreateScenario :one
 
 INSERT INTO scenarios (id, title, description, difficulty)

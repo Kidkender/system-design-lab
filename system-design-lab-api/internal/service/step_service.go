@@ -31,8 +31,8 @@ func (s *StepService) CreateStep(ctx context.Context, req *dto.CreateStepRequest
 	}
 
 	step, err := s.q.CreateStep(ctx, db.CreateStepParams{
-		ID:         uuid.New(),
-		ScenarioID: scenarioID,
+		Column1:    uuid.New(),
+		Column2:    scenarioID,
 		Question:   req.Question,
 		Context:    pgtype.Text{String: *req.Context, Valid: req.Context != nil},
 		OrderIndex: req.OrderIndex,
@@ -62,12 +62,16 @@ func (s *StepService) GetStepsPaginated(
 		limit = 10
 	}
 
+	total, err := s.q.CountSteps(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	offset := (page - 1) * limit
 	steps, err := s.q.GetStepsPaginated(ctx, db.GetStepsPaginatedParams{
 		Limit:  limit,
 		Offset: offset,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -81,14 +85,15 @@ func (s *StepService) GetStepsPaginated(
 			Choices:  nil,
 		})
 	}
-	totalPages := (int32(len(steps)) + limit - 1) / limit
+
+	totalPages := (total + int64(limit) - 1) / int64(limit)
 
 	return &dto.PaginationResponse[dto.StepResponse]{
 		Data:       data,
-		Total:      int32(len(steps)),
+		Total:      int32(total),
 		Page:       page,
 		Limit:      limit,
-		TotalPages: totalPages,
+		TotalPages: int32(totalPages),
 	}, nil
 
 }
