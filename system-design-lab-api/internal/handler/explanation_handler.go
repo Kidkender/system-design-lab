@@ -18,6 +18,16 @@ func NewExplanationHandler(s *service.ExplanationService) *ExplanationHandler {
 	return &ExplanationHandler{service: s}
 }
 
+// CreateExplanation godoc
+// @Summary      Create an explanation
+// @Tags         explanations
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dto.CreateExplanationRequest  true  "Explanation payload"
+// @Success      201   {object}  dto.ExplanationCreatedResponse
+// @Failure      400   {string}  string
+// @Failure      500   {string}  string
+// @Router       /explanations [post]
 func (h *ExplanationHandler) CreateExplanation(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateExplanationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -41,6 +51,17 @@ func (h *ExplanationHandler) CreateExplanation(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(resp)
 }
 
+// UpdateExplanation godoc
+// @Summary      Update an explanation
+// @Tags         explanations
+// @Accept       json
+// @Produce      json
+// @Param        id    path      string                       true  "Explanation UUID"
+// @Param        body  body      dto.UpdateExplanationRequest true  "Explanation payload"
+// @Success      200   {object}  dto.ExplanationCreatedResponse
+// @Failure      400   {string}  string
+// @Failure      500   {string}  string
+// @Router       /explanations/{id} [put]
 func (h *ExplanationHandler) UpdateExplanation(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
@@ -69,6 +90,14 @@ func (h *ExplanationHandler) UpdateExplanation(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(resp)
 }
 
+// DeleteExplanation godoc
+// @Summary      Delete an explanation
+// @Tags         explanations
+// @Param        id   path      string  true  "Explanation UUID"
+// @Success      204
+// @Failure      400  {string}  string
+// @Failure      500  {string}  string
+// @Router       /explanations/{id} [delete]
 func (h *ExplanationHandler) DeleteExplanation(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {

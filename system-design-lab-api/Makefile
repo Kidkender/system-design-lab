@@ -20,3 +20,6 @@ run:
 
 dev:
 	air
+
+swagger:
+	swag init -g cmd/server/main.go

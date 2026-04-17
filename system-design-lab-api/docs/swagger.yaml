@@ -1,4 +1,932 @@
+basePath: /api/v1
+definitions:
+  dto.ChoiceCreatedResponse:
+    properties:
+      id:
+        type: string
+      isCorrect:
+        type: boolean
+      label:
+        type: string
+      nextStepId:
+        type: string
+      stepId:
+        type: string
+    type: object
+  dto.ChoiceResponse:
+    properties:
+      consequences:
+        items:
+          $ref: '#/definitions/dto.ConsequencesResponse'
+        type: array
+      explanations:
+        additionalProperties:
+          type: string
+        type: object
+      id:
+        type: string
+      impacts:
+        items:
+          $ref: '#/definitions/dto.ImpactResponse'
+        type: array
+      isCorrect:
+        type: boolean
+      label:
+        type: string
+      nextStepId:
+        type: string
+    type: object
+  dto.ConsequenceCreatedResponse:
+    properties:
+      choiceId:
+        type: string
+      id:
+        type: string
+      keys:
+        type: string
+      type:
+        type: string
+      value:
+        type: boolean
+    type: object
+  dto.ConsequencesResponse:
+    properties:
+      key:
+        type: string
+      value:
+        type: boolean
+    type: object
+  dto.CreateChoiceRequest:
+    properties:
+      isCorrect:
+        type: boolean
+      label:
+        minLength: 1
+        type: string
+      nextStepId:
+        type: string
+      stepId:
+        type: string
+    required:
+    - label
+    - stepId
+    type: object
+  dto.CreateConsequenceRequest:
+    properties:
+      choiceId:
+        type: string
+      keys:
+        type: string
+      type:
+        type: string
+      value:
+        type: boolean
+    required:
+    - choiceId
+    - keys
+    - type
+    type: object
+  dto.CreateExplanationRequest:
+    properties:
+      choiceId:
+        type: string
+      content:
+        minLength: 1
+        type: string
+      level:
+        enum:
+        - beginner
+        - intermediate
+        - advanced
+        type: string
+    required:
+    - choiceId
+    - content
+    - level
+    type: object
+  dto.CreateImpactRequest:
+    properties:
+      choiceId:
+        type: string
+      metric:
+        enum:
+        - latency
+        - cost
+        - scalability
+        type: string
+      type:
+        enum:
+        - add
+        - multiply
+        - set
+        type: string
+      value:
+        type: number
+    required:
+    - choiceId
+    - metric
+    - type
+    type: object
+  dto.CreateScenarioRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      difficulty:
+        enum:
+        - easy
+        - medium
+        - hard
+        type: string
+      start_step_id:
+        type: string
+      title:
+        minLength: 3
+        type: string
+    required:
+    - title
+    type: object
+  dto.CreateStepRequest:
+    properties:
+      context:
+        maxLength: 500
+        type: string
+      orderIndex:
+        type: integer
+      question:
+        minLength: 3
+        type: string
+      scenarioID:
+        type: string
+    required:
+    - question
+    type: object
+  dto.ExplanationCreatedResponse:
+    properties:
+      choiceId:
+        type: string
+      content:
+        type: string
+      id:
+        type: string
+      level:
+        type: string
+    type: object
+  dto.ImpactCreatedResponse:
+    properties:
+      choiceId:
+        type: string
+      id:
+        type: string
+      metric:
+        type: string
+      type:
+        type: string
+      value:
+        type: number
+    type: object
+  dto.ImpactResponse:
+    properties:
+      metric:
+        type: string
+      type:
+        type: string
+      value:
+        type: number
+    type: object
+  dto.ScenarioPaginationResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.ScenarioResponse'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  dto.ScenarioResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      steps:
+        items:
+          $ref: '#/definitions/dto.StepResponse'
+        type: array
+      title:
+        type: string
+    type: object
+  dto.SessionResponse:
+    properties:
+      currentStep:
+        $ref: '#/definitions/dto.StepResponse'
+      flags:
+        additionalProperties:
+          type: boolean
+        type: object
+      id:
+        type: string
+      metrics:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+      scenarioId:
+        type: string
+      status:
+        type: string
+    type: object
+  dto.SessionSummaryResponse:
+    properties:
+      choices:
+        items:
+          $ref: '#/definitions/dto.UserChoiceSummary'
+        type: array
+      createdAt:
+        type: string
+      flags:
+        additionalProperties:
+          type: boolean
+        type: object
+      id:
+        type: string
+      metrics:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+      scenarioId:
+        type: string
+      status:
+        type: string
+    type: object
+  dto.StartSessionRequest:
+    properties:
+      scenarioId:
+        type: string
+      userId:
+        type: string
+    required:
+    - scenarioId
+    - userId
+    type: object
+  dto.StepPaginationResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.StepResponse'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  dto.StepResponse:
+    properties:
+      choices:
+        items:
+          $ref: '#/definitions/dto.ChoiceResponse'
+        type: array
+      context:
+        type: string
+      id:
+        type: string
+      question:
+        type: string
+    type: object
+  dto.SubmitChoiceRequest:
+    properties:
+      choiceId:
+        type: string
+    required:
+    - choiceId
+    type: object
+  dto.SubmitChoiceResponse:
+    properties:
+      explanations:
+        additionalProperties:
+          type: string
+        type: object
+      feedback:
+        type: string
+      isCompleted:
+        type: boolean
+      isCorrect:
+        type: boolean
+      metrics:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+      nextStep:
+        $ref: '#/definitions/dto.StepResponse'
+    type: object
+  dto.UpdateConsequenceRequest:
+    properties:
+      keys:
+        type: string
+      type:
+        type: string
+      value:
+        type: boolean
+    required:
+    - keys
+    - type
+    type: object
+  dto.UpdateExplanationRequest:
+    properties:
+      content:
+        minLength: 1
+        type: string
+      level:
+        enum:
+        - beginner
+        - intermediate
+        - advanced
+        type: string
+    required:
+    - content
+    - level
+    type: object
+  dto.UpdateImpactRequest:
+    properties:
+      metric:
+        enum:
+        - latency
+        - cost
+        - scalability
+        type: string
+      type:
+        enum:
+        - add
+        - multiply
+        - set
+        type: string
+      value:
+        type: number
+    required:
+    - metric
+    - type
+    type: object
+  dto.UserChoiceSummary:
+    properties:
+      choiceId:
+        type: string
+      explanations:
+        additionalProperties:
+          type: string
+        type: object
+      isCorrect:
+        type: boolean
+      label:
+        type: string
+      question:
+        type: string
+      stepId:
+        type: string
+    type: object
+host: localhost:8080
 info:
   contact: {}
-paths: {}
+  description: Guided System Design Playground — learn system design through decisions
+    and consequences.
+  title: System Design Lab API
+  version: "1.0"
+paths:
+  /choices:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Choice payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateChoiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ChoiceCreatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a choice
+      tags:
+      - choices
+  /consequences:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Consequence payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateConsequenceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ConsequenceCreatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a consequence
+      tags:
+      - consequences
+  /consequences/{id}:
+    delete:
+      parameters:
+      - description: Consequence UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete a consequence
+      tags:
+      - consequences
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Consequence UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Consequence payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateConsequenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ConsequenceCreatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update a consequence
+      tags:
+      - consequences
+  /explanations:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Explanation payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateExplanationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ExplanationCreatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create an explanation
+      tags:
+      - explanations
+  /explanations/{id}:
+    delete:
+      parameters:
+      - description: Explanation UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete an explanation
+      tags:
+      - explanations
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Explanation UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Explanation payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateExplanationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ExplanationCreatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update an explanation
+      tags:
+      - explanations
+  /impacts:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Impact payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateImpactRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ImpactCreatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create an impact
+      tags:
+      - impacts
+  /impacts/{id}:
+    delete:
+      parameters:
+      - description: Impact UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete an impact
+      tags:
+      - impacts
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Impact UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Impact payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateImpactRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ImpactCreatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update an impact
+      tags:
+      - impacts
+  /scenarios:
+    get:
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ScenarioPaginationResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: List scenarios
+      tags:
+      - scenarios
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Scenario payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateScenarioRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a scenario
+      tags:
+      - scenarios
+  /scenarios/{id}:
+    get:
+      parameters:
+      - description: Scenario UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ScenarioResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get a scenario by ID
+      tags:
+      - scenarios
+  /sessions:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StartSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Start a new session
+      tags:
+      - sessions
+  /sessions/{id}:
+    get:
+      parameters:
+      - description: Session UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get session by ID
+      tags:
+      - sessions
+  /sessions/{id}/submit:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Choice payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SubmitChoiceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SubmitChoiceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Submit a choice for a session
+      tags:
+      - sessions
+  /sessions/{id}/summary:
+    get:
+      parameters:
+      - description: Session UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SessionSummaryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get session summary
+      tags:
+      - sessions
+  /steps:
+    get:
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.StepPaginationResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: List steps
+      tags:
+      - steps
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Step payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateStepRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.StepResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a step
+      tags:
+      - steps
 swagger: "2.0"

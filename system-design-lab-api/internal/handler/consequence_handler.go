@@ -18,6 +18,16 @@ func NewConsequenceHandler(s *service.ConsequenceService) *ConsequenceHandler {
 	return &ConsequenceHandler{service: s}
 }
 
+// CreateConsequence godoc
+// @Summary      Create a consequence
+// @Tags         consequences
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dto.CreateConsequenceRequest  true  "Consequence payload"
+// @Success      201   {object}  dto.ConsequenceCreatedResponse
+// @Failure      400   {string}  string
+// @Failure      500   {string}  string
+// @Router       /consequences [post]
 func (h *ConsequenceHandler) CreateConsequence(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateConsequenceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -41,6 +51,17 @@ func (h *ConsequenceHandler) CreateConsequence(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(resp)
 }
 
+// UpdateConsequence godoc
+// @Summary      Update a consequence
+// @Tags         consequences
+// @Accept       json
+// @Produce      json
+// @Param        id    path      string                        true  "Consequence UUID"
+// @Param        body  body      dto.UpdateConsequenceRequest  true  "Consequence payload"
+// @Success      200   {object}  dto.ConsequenceCreatedResponse
+// @Failure      400   {string}  string
+// @Failure      500   {string}  string
+// @Router       /consequences/{id} [put]
 func (h *ConsequenceHandler) UpdateConsequence(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
@@ -69,6 +90,14 @@ func (h *ConsequenceHandler) UpdateConsequence(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(resp)
 }
 
+// DeleteConsequence godoc
+// @Summary      Delete a consequence
+// @Tags         consequences
+// @Param        id   path      string  true  "Consequence UUID"
+// @Success      204
+// @Failure      400  {string}  string
+// @Failure      500  {string}  string
+// @Router       /consequences/{id} [delete]
 func (h *ConsequenceHandler) DeleteConsequence(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {

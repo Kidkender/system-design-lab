@@ -1,3 +1,8 @@
+// @title           System Design Lab API
+// @version         1.0
+// @description     Guided System Design Playground — learn system design through decisions and consequences.
+// @host            localhost:8080
+// @BasePath        /api/v1
 package main
 
 import (

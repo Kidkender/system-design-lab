@@ -20,6 +20,15 @@ func NewScenarioHandler(s *service.ScenarioService) *ScenarioHandler {
 	return &ScenarioHandler{service: s}
 }
 
+// GetScenariosPaginated godoc
+// @Summary      List scenarios
+// @Tags         scenarios
+// @Produce      json
+// @Param        page   query     int  false  "Page number"
+// @Param        limit  query     int  false  "Items per page"
+// @Success      200    {object}  dto.ScenarioPaginationResponse
+// @Failure      500    {string}  string
+// @Router       /scenarios [get]
 func (h *ScenarioHandler) GetScenariosPaginated(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	limitStr := r.URL.Query().Get("limit")
@@ -38,6 +47,16 @@ func (h *ScenarioHandler) GetScenariosPaginated(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(resp)
 }
 
+// CreateScenario godoc
+// @Summary      Create a scenario
+// @Tags         scenarios
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dto.CreateScenarioRequest  true  "Scenario payload"
+// @Success      201
+// @Failure      400   {string}  string
+// @Failure      500   {string}  string
+// @Router       /scenarios [post]
 func (h *ScenarioHandler) CreateScenario(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateScenarioRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -50,6 +69,15 @@ func (h *ScenarioHandler) CreateScenario(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusCreated)
 }
 
+// GetScenario godoc
+// @Summary      Get a scenario by ID
+// @Tags         scenarios
+// @Produce      json
+// @Param        id   path      string  true  "Scenario UUID"
+// @Success      200  {object}  dto.ScenarioResponse
+// @Failure      400  {string}  string
+// @Failure      500  {string}  string
+// @Router       /scenarios/{id} [get]
 func (h *ScenarioHandler) GetScenario(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/scenarios/")
 	id, err := uuid.Parse(idStr)

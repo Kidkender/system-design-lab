@@ -18,6 +18,16 @@ func NewImpactHandler(s *service.ImpactService) *ImpactHandler {
 	return &ImpactHandler{service: s}
 }
 
+// CreateImpact godoc
+// @Summary      Create an impact
+// @Tags         impacts
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dto.CreateImpactRequest  true  "Impact payload"
+// @Success      201   {object}  dto.ImpactCreatedResponse
+// @Failure      400   {string}  string
+// @Failure      500   {string}  string
+// @Router       /impacts [post]
 func (h *ImpactHandler) CreateImpact(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateImpactRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -41,6 +51,17 @@ func (h *ImpactHandler) CreateImpact(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+// UpdateImpact godoc
+// @Summary      Update an impact
+// @Tags         impacts
+// @Accept       json
+// @Produce      json
+// @Param        id    path      string                  true  "Impact UUID"
+// @Param        body  body      dto.UpdateImpactRequest true  "Impact payload"
+// @Success      200   {object}  dto.ImpactCreatedResponse
+// @Failure      400   {string}  string
+// @Failure      500   {string}  string
+// @Router       /impacts/{id} [put]
 func (h *ImpactHandler) UpdateImpact(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
@@ -69,6 +90,14 @@ func (h *ImpactHandler) UpdateImpact(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+// DeleteImpact godoc
+// @Summary      Delete an impact
+// @Tags         impacts
+// @Param        id   path      string  true  "Impact UUID"
+// @Success      204
+// @Failure      400  {string}  string
+// @Failure      500  {string}  string
+// @Router       /impacts/{id} [delete]
 func (h *ImpactHandler) DeleteImpact(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {

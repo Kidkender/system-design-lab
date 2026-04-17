@@ -19,6 +19,16 @@ func NewStepHandler(service *service.StepService) *StepHandler {
 	return &StepHandler{service: service}
 }
 
+// CreateStep godoc
+// @Summary      Create a step
+// @Tags         steps
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dto.CreateStepRequest  true  "Step payload"
+// @Success      201   {object}  dto.StepResponse
+// @Failure      400   {string}  string
+// @Failure      500   {string}  string
+// @Router       /steps [post]
 func (h *StepHandler) CreateStep(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateStepRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -41,6 +51,15 @@ func (h *StepHandler) CreateStep(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+// GetStepsPaginated godoc
+// @Summary      List steps
+// @Tags         steps
+// @Produce      json
+// @Param        page   query     int  false  "Page number"
+// @Param        limit  query     int  false  "Items per page"
+// @Success      200    {object}  dto.StepPaginationResponse
+// @Failure      500    {string}  string
+// @Router       /steps [get]
 func (h *StepHandler) GetStepsPaginated(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	limitStr := r.URL.Query().Get("limit")
