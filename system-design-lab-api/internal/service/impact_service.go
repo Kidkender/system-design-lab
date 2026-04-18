@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/kidkender/system-design-lab/internal/db"
@@ -63,5 +64,8 @@ func (s *ImpactService) UpdateImpact(ctx context.Context, id uuid.UUID, req *dto
 }
 
 func (s *ImpactService) DeleteImpact(ctx context.Context, id uuid.UUID) error {
-	return s.q.DeleteImpact(ctx, id)
+	err := s.q.DeleteImpact(ctx, id)
+
+	slog.Info("Impact deleted", "id", id.String())
+	return err
 }

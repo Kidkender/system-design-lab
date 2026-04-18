@@ -8,11 +8,15 @@ import (
 	"github.com/kidkender/system-design-lab/internal/handler/dto"
 )
 
-type ChoiceService struct {
-	q *db.Queries
+type choiceQuerier interface {
+	CreateChoice(ctx context.Context, arg db.CreateChoiceParams) (db.Choice, error)
 }
 
-func NewChoiceService(q *db.Queries) *ChoiceService {
+type ChoiceService struct {
+	q choiceQuerier
+}
+
+func NewChoiceService(q choiceQuerier) *ChoiceService {
 	return &ChoiceService{q: q}
 }
 
