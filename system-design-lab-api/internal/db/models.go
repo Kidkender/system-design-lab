@@ -339,6 +339,7 @@ type User struct {
 	ID        uuid.UUID
 	Username  string
 	Email     string
+	Password  string
 	CreatedAt pgtype.Timestamp
 }
 

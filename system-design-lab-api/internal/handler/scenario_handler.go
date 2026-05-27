@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -33,9 +32,15 @@ func (h *ScenarioHandler) GetScenariosPaginated(w http.ResponseWriter, r *http.R
 	pageStr := r.URL.Query().Get("page")
 	limitStr := r.URL.Query().Get("limit")
 
-	fmt.Printf("page: %s, limit: %s\n", pageStr, limitStr)
-	page, _ := strconv.Atoi(pageStr)
-	limit, _ := strconv.Atoi(limitStr)
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 20
+	}
 
 	resp, err := h.service.GetScenariosPaginated(r.Context(), int32(page), int32(limit))
 	if err != nil {
@@ -79,7 +84,7 @@ func (h *ScenarioHandler) CreateScenario(w http.ResponseWriter, r *http.Request)
 // @Failure      500  {string}  string
 // @Router       /scenarios/{id} [get]
 func (h *ScenarioHandler) GetScenario(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/scenarios/")
+	idStr := strings.TrimPrefix(r.URL.Path, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		http.Error(w, "invalid uuid", http.StatusBadRequest)

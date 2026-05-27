@@ -1,8 +1,3 @@
-// @title           System Design Lab API
-// @version         1.0
-// @description     Guided System Design Playground — learn system design through decisions and consequences.
-// @host            localhost:8080
-// @BasePath        /api/v1
 package main
 
 import (
@@ -31,7 +26,8 @@ func main() {
 	container := app.NewContainer(conn)
 	container.RegisterRoutes(mux)
 
-	loggedMux := middleware.LoggingMiddleware(mux)
+	corsMux := middleware.EnableCORS(mux)
+	loggedMux := middleware.LoggingMiddleware(corsMux)
 	slog.Info("server running on :8080")
 	if err := http.ListenAndServe(":8080", loggedMux); err != nil {
 		slog.Error("server error", "error", err)

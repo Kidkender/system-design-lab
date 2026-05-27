@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/kidkender/system-design-lab/internal/apperror"
 	"github.com/kidkender/system-design-lab/internal/db"
 
 	"github.com/kidkender/system-design-lab/internal/handler/dto"
@@ -19,7 +20,10 @@ func NewScenarioService(q *db.Queries) *ScenarioService {
 	return &ScenarioService{q: q}
 }
 
-func (s *ScenarioService) CreateScenario(ctx context.Context, req *dto.CreateScenarioRequest) {
+func (s *ScenarioService) CreateScenario(
+	ctx context.Context,
+	req *dto.CreateScenarioRequest,
+) error {
 	scenario, err := s.q.CreateScenario(
 		ctx,
 		db.CreateScenarioParams{
@@ -31,9 +35,11 @@ func (s *ScenarioService) CreateScenario(ctx context.Context, req *dto.CreateSce
 	)
 	if err != nil {
 		slog.Error("Failed to create scenario", "error", err)
+		return apperror.BadRequest("Create scenario failed")
 	}
 
 	slog.Info("Scenario %s created", "id", scenario.ID)
+	return nil
 }
 
 func (s *ScenarioService) GetScenario(ctx context.Context, id uuid.UUID) (*dto.ScenarioResponse, error) {

@@ -452,3 +452,11 @@ func (s *SessionService) buildStepResponse(ctx context.Context, stepID uuid.UUID
 		Choices:  choiceResps,
 	}, nil
 }
+
+// func (s *SessionService) GetSessionByUserID(ctx context.Context, userID uuid.UUID) (*dto.SessionResponse, error) {
+// 	session, err := s.q.GetSession(ctx, userID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// }

@@ -26,3 +26,9 @@ SELECT id, session_id, step_id, choice_id, created_at
 FROM user_choices
 WHERE session_id = $1::uuid
 ORDER BY created_at;
+
+-- name: ListSessionsByUserID :many
+SELECT *
+FROM user_sessions
+WHERE user_id = $1::uuid
+ORDER BY created_at;
