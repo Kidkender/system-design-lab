@@ -120,6 +120,52 @@ func (q *Queries) GetStep(ctx context.Context, dollar_1 uuid.UUID) (GetStepRow, 
 	return i, err
 }
 
+const getStepsByIDs = `-- name: GetStepsByIDs :many
+SELECT 
+    id,
+    scenario_id,
+    question,
+    context,
+    order_index
+FROM steps
+WHERE id IN ($1::uuid[])
+ORDER BY order_index
+`
+
+type GetStepsByIDsRow struct {
+	ID         uuid.UUID
+	ScenarioID uuid.UUID
+	Question   string
+	Context    pgtype.Text
+	OrderIndex int32
+}
+
+func (q *Queries) GetStepsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]GetStepsByIDsRow, error) {
+	rows, err := q.db.Query(ctx, getStepsByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetStepsByIDsRow
+	for rows.Next() {
+		var i GetStepsByIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ScenarioID,
+			&i.Question,
+			&i.Context,
+			&i.OrderIndex,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getStepsByScenario = `-- name: GetStepsByScenario :many
 SELECT
     id,

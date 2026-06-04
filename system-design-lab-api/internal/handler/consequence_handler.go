@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/kidkender/system-design-lab/internal/common/response"
 	"github.com/kidkender/system-design-lab/internal/handler/dto"
 	"github.com/kidkender/system-design-lab/internal/service"
 	v "github.com/kidkender/system-design-lab/internal/validator"
@@ -31,24 +32,22 @@ func NewConsequenceHandler(s *service.ConsequenceService) *ConsequenceHandler {
 func (h *ConsequenceHandler) CreateConsequence(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateConsequenceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	if err := v.ValidateStruct(req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	resp, err := h.service.CreateConsequence(r.Context(), &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusCreated, resp)
 }
 
 // UpdateConsequence godoc
@@ -65,29 +64,28 @@ func (h *ConsequenceHandler) CreateConsequence(w http.ResponseWriter, r *http.Re
 func (h *ConsequenceHandler) UpdateConsequence(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	var req dto.UpdateConsequenceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	if err := v.ValidateStruct(req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	resp, err := h.service.UpdateConsequence(r.Context(), id, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusOK, resp)
 }
 
 // DeleteConsequence godoc
@@ -101,12 +99,12 @@ func (h *ConsequenceHandler) UpdateConsequence(w http.ResponseWriter, r *http.Re
 func (h *ConsequenceHandler) DeleteConsequence(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	if err := h.service.DeleteConsequence(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 

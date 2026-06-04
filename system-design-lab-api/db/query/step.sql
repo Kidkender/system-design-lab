@@ -67,3 +67,14 @@ SET start_step_id = $2
 WHERE
     id = $1::uuid
     AND start_step_id IS NULL;
+
+-- name: GetStepsByIDs :many
+SELECT 
+    id,
+    scenario_id,
+    question,
+    context,
+    order_index
+FROM steps
+WHERE id IN ($1::uuid[])
+ORDER BY order_index;

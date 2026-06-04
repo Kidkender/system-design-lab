@@ -10,3 +10,9 @@ type CreateScenarioRequest struct {
 type UpdateStartStepRequest struct {
 	StartStepID *string `json:"start_step_id" validate:"required"`
 }
+
+type ScenarioFilter struct {
+	Difficulty *string `json:"difficulty" validate:"oneof=easy medium hard"`
+	Page       int
+	Limit      int
+}

@@ -28,8 +28,10 @@ func main() {
 
 	corsMux := middleware.EnableCORS(mux)
 	loggedMux := middleware.LoggingMiddleware(corsMux)
+	rateLimitedMux := middleware.RateLimitMiddleware(loggedMux)
+
 	slog.Info("server running on :8080")
-	if err := http.ListenAndServe(":8080", loggedMux); err != nil {
+	if err := http.ListenAndServe(":8080", rateLimitedMux); err != nil {
 		slog.Error("server error", "error", err)
 	}
 }

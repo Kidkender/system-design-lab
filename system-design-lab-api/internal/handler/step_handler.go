@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/kidkender/system-design-lab/internal/common/response"
 	"github.com/kidkender/system-design-lab/internal/handler/dto"
 	"github.com/kidkender/system-design-lab/internal/service"
 
@@ -32,23 +33,22 @@ func NewStepHandler(service *service.StepService) *StepHandler {
 func (h *StepHandler) CreateStep(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateStepRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	if err := v.ValidateStruct(req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	resp, err := h.service.CreateStep(r.Context(), &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusCreated, resp)
 }
 
 // GetStepsPaginated godoc
@@ -69,13 +69,11 @@ func (h *StepHandler) GetStepsPaginated(w http.ResponseWriter, r *http.Request) 
 
 	resp, err := h.service.GetStepsPaginated(r.Context(), int32(page), int32(limit))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusOK, resp)
 }
 
 func (h *StepHandler) RegisterRoutes(mux *http.ServeMux) {

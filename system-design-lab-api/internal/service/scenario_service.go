@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kidkender/system-design-lab/internal/apperror"
 	"github.com/kidkender/system-design-lab/internal/db"
 
@@ -14,6 +16,7 @@ import (
 
 type ScenarioService struct {
 	q *db.Queries
+	pool *pgxpool.Pool
 }
 
 func NewScenarioService(q *db.Queries) *ScenarioService {
@@ -168,47 +171,67 @@ func (s *ScenarioService) GetScenarios(ctx context.Context) ([]dto.ScenarioRespo
 }
 
 func (s *ScenarioService) GetScenariosPaginated(
-	ctx context.Context, page int32, limit int32,
+	ctx context.Context, filter dto.ScenarioFilter,
 ) (*dto.PaginationResponse[dto.ScenarioResponse], error) {
-	if page < 0 {
-		page = 1
+	if filter.Page <= 0 {
+		filter.Page = 1
+	}
+	if filter.Limit <= 0 {
+		filter.Limit = 10
 	}
 
-	if limit < 0 {
-		limit = 10
+	offset := (filter.Page - 1) * filter.Limit
+
+	countQuery := "SELECT COUNT(*) FROM scenarios WHERE 1=1"
+	dataQuery := "SELECT id, title, description, difficulty, created_at FROM scenarios WHERE 1=1"
+	args := []any{}
+	argIdx := 1
+
+	if filter.Difficulty != nil && *filter.Difficulty != "" {
+		clause := fmt.Sprintf(" AND difficulty = $%d", argIdx)
+		countQuery += clause
+		dataQuery += clause
+		args = append(args, *filter.Difficulty)
+		argIdx++
 	}
 
-	offset := (page - 1) * limit
-	total, err := s.q.CountScenarios(ctx)
-	if err != nil {
+	var total int64
+	if err := s.pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, err
 	}
 
-	scenarios, err := s.q.ListScenariosPaginated(ctx, db.ListScenariosPaginatedParams{
-		Limit:  int32(limit),
-		Offset: int32(offset),
-	})
+	dataQuery += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
+	args = append(args, filter.Limit, offset)
+
+	rows, err := s.pool.Query(ctx, dataQuery, args...)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	data := make([]dto.ScenarioResponse, 0, len(scenarios))
-	for _, sc := range scenarios {
+	data := make([]dto.ScenarioResponse, 0)
+	for rows.Next() {
+		var sc db.Scenario
+		if err := rows.Scan(&sc.ID, &sc.Title, &sc.Description, &sc.Difficulty, &sc.CreatedAt); err != nil {
+			return nil, err
+		}
 		data = append(data, dto.ScenarioResponse{
 			ID:          sc.ID.String(),
 			Title:       sc.Title,
 			Description: sc.Description.String,
 		})
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
-	totalPages := (total + int64(limit) - 1) / int64(limit)
+	totalPages := (total + int64(filter.Limit) - 1) / int64(filter.Limit)
 
 	return &dto.PaginationResponse[dto.ScenarioResponse]{
 		Data:       data,
 		Total:      int32(total),
-		Page:       page,
-		Limit:      limit,
+		Page:       int32(filter.Page),
+		Limit:      int32(filter.Limit),
 		TotalPages: int32(totalPages),
 	}, nil
-
 }

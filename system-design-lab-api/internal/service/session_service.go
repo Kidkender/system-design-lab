@@ -319,15 +319,21 @@ func (s *SessionService) GetSessionSummary(ctx context.Context, sessionID uuid.U
 		explainMap[e.ChoiceID][string(e.Level)] = e.Content
 	}
 
-	// Fetch step questions individually (no batch query available)
-	stepQuestionMap := make(map[uuid.UUID]string, len(userChoices))
+	seen := make(map[uuid.UUID]bool)
+	stepIDs := make(uuid.UUIDs, 0, len(userChoices))
 	for _, uc := range userChoices {
-		if _, seen := stepQuestionMap[uc.StepID]; !seen {
-			step, err := s.q.GetStep(ctx, uc.StepID)
-			if err == nil {
-				stepQuestionMap[uc.StepID] = step.Question
-			}
+		if !seen[uc.StepID] {
+			seen[uc.StepID] = true
+			stepIDs = append(stepIDs, uc.StepID)
 		}
+	}
+	steps, err := s.q.GetStepsByIDs(ctx, stepIDs)
+	if err != nil {
+		return nil, err
+	}
+	stepQuestionMap := make(map[uuid.UUID]string, len(steps))
+	for _, step := range steps {
+		stepQuestionMap[step.ID] = step.Question
 	}
 
 	summaries := make([]dto.UserChoiceSummary, 0, len(userChoices))

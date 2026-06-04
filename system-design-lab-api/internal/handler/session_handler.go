@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/kidkender/system-design-lab/internal/common/response"
 	"github.com/kidkender/system-design-lab/internal/handler/dto"
 	"github.com/kidkender/system-design-lab/internal/service"
 	v "github.com/kidkender/system-design-lab/internal/validator"
@@ -31,24 +32,22 @@ func NewSessionHandler(s *service.SessionService) *SessionHandler {
 func (h *SessionHandler) StartSession(w http.ResponseWriter, r *http.Request) {
 	var req dto.StartSessionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	if err := v.ValidateStruct(req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	resp, err := h.service.StartSession(r.Context(), &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusCreated, resp)
 }
 
 // SubmitChoice godoc
@@ -66,29 +65,28 @@ func (h *SessionHandler) SubmitChoice(w http.ResponseWriter, r *http.Request) {
 	sessionIDStr := r.PathValue("id")
 	sessionID, err := uuid.Parse(sessionIDStr)
 	if err != nil {
-		http.Error(w, "invalid session id", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	var req dto.SubmitChoiceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	if err := v.ValidateStruct(req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	resp, err := h.service.SubmitChoice(r.Context(), sessionID, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusOK, resp)
 }
 
 // GetSession godoc
@@ -103,18 +101,17 @@ func (h *SessionHandler) SubmitChoice(w http.ResponseWriter, r *http.Request) {
 func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 	sessionID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "invalid session id", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	resp, err := h.service.GetSession(r.Context(), sessionID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusOK, resp)
 }
 
 // GetSessionSummary godoc
@@ -129,18 +126,17 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 func (h *SessionHandler) GetSessionSummary(w http.ResponseWriter, r *http.Request) {
 	sessionID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "invalid session id", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	resp, err := h.service.GetSessionSummary(r.Context(), sessionID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusOK, resp)
 }
 
 func (h *SessionHandler) RegisterRoutes(mux *http.ServeMux) {

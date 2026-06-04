@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/kidkender/system-design-lab/internal/common/response"
 	"github.com/kidkender/system-design-lab/internal/handler/dto"
 	"github.com/kidkender/system-design-lab/internal/service"
 )
@@ -29,27 +30,31 @@ func NewScenarioHandler(s *service.ScenarioService) *ScenarioHandler {
 // @Failure      500    {string}  string
 // @Router       /scenarios [get]
 func (h *ScenarioHandler) GetScenariosPaginated(w http.ResponseWriter, r *http.Request) {
-	pageStr := r.URL.Query().Get("page")
-	limitStr := r.URL.Query().Get("limit")
-
-	page, err := strconv.Atoi(pageStr)
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil || page < 1 {
 		page = 1
 	}
 
-	limit, err := strconv.Atoi(limitStr)
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil || limit < 1 {
 		limit = 20
 	}
 
-	resp, err := h.service.GetScenariosPaginated(r.Context(), int32(page), int32(limit))
+	filter := dto.ScenarioFilter{
+		Page:  page,
+		Limit: limit,
+	}
+	if d := r.URL.Query().Get("difficulty"); d != "" {
+		filter.Difficulty = &d
+	}
+
+	resp, err := h.service.GetScenariosPaginated(r.Context(), filter)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusOK, resp)
 }
 
 // CreateScenario godoc
@@ -87,19 +92,18 @@ func (h *ScenarioHandler) GetScenario(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "invalid uuid", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	resp, err := h.service.GetScenario(r.Context(), id)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusOK, resp)
 }
 
 func (h *ScenarioHandler) RegisterRoutes(mux *http.ServeMux) {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/kidkender/system-design-lab/internal/common/response"
 	"github.com/kidkender/system-design-lab/internal/handler/dto"
 	"github.com/kidkender/system-design-lab/internal/service"
 	v "github.com/kidkender/system-design-lab/internal/validator"
@@ -31,24 +32,22 @@ func NewImpactHandler(s *service.ImpactService) *ImpactHandler {
 func (h *ImpactHandler) CreateImpact(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateImpactRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	if err := v.ValidateStruct(req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	resp, err := h.service.CreateImpact(r.Context(), &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusCreated, resp)
 }
 
 // UpdateImpact godoc
@@ -65,29 +64,28 @@ func (h *ImpactHandler) CreateImpact(w http.ResponseWriter, r *http.Request) {
 func (h *ImpactHandler) UpdateImpact(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	var req dto.UpdateImpactRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	if err := v.ValidateStruct(req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	resp, err := h.service.UpdateImpact(r.Context(), id, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	response.Success(w, http.StatusOK, resp)
 }
 
 // DeleteImpact godoc
@@ -101,12 +99,12 @@ func (h *ImpactHandler) UpdateImpact(w http.ResponseWriter, r *http.Request) {
 func (h *ImpactHandler) DeleteImpact(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		response.Error(w, err)
 		return
 	}
 
 	if err := h.service.DeleteImpact(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.Error(w, err)
 		return
 	}
 
