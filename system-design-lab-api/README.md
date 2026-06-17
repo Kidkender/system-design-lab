@@ -1,111 +1,70 @@
 # system-design-lab-api
 
-Backend API cho [System Design Lab](https://github.com/kidkender/system-design-lab) — nền tảng học system design thông qua quyết định và trade-off.
+Go backend cho [System Design Lab](../README.md).
 
-## Tech Stack
-
-- **Go** 1.25
-- **PostgreSQL** — primary database
-- **pgx/v5** — PostgreSQL driver
-- **sqlc** — type-safe SQL query generation
-
-## Project Structure
-
-```
-system-design-lab-api/
-├── cmd/server/         # Entry point (main.go)
-├── db/                 # Raw SQL schema
-│   └── schema.sql
-├── internal/
-│   ├── db/             # sqlc-generated models & queries
-│   ├── handler/        # HTTP handlers
-│   │   └── dto/        # Request/Response DTOs
-│   └── service/        # Business logic
-├── go.mod
-├── go.sum
-└── sqlc.yaml
-```
-
-## Getting Started
-
-### Prerequisites
+## Yêu cầu
 
 - Go 1.21+
-- PostgreSQL running on port `5433`
-- [sqlc](https://sqlc.dev/) (optional, for regenerating queries)
+- PostgreSQL (chạy trên port `5433`)
+- [sqlc](https://sqlc.dev/) — chỉ cần khi thay đổi SQL schema/query
 
-### Setup
-
-1. Clone the repo
+## Chạy nhanh
 
 ```bash
-git clone https://github.com/kidkender/system-design-lab.git
-cd system-design-lab/system-design-lab-api
-```
-
-2. Start PostgreSQL và tạo database
-
-```bash
+# 1. Tạo database
 createdb system_db
 psql -d system_db -f db/schema.sql
-```
 
-3. Run server
+# 2. (Nếu DB đang có từ trước, chạy migration để thêm tính năng mới)
+psql -d system_db -f db/migrations/001_add_features.sql
 
-```bash
+# 3. Chạy server
 go run cmd/server/main.go
 ```
 
-Server khởi động tại `http://localhost:8080`.
+Server chạy tại `http://localhost:8080`.
 
-## API Endpoints
+## Biến môi trường
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/scenarios/:id` | Lấy thông tin scenario theo UUID |
+| Biến | Mặc định | Mô tả |
+|------|----------|-------|
+| `DATABASE_URL` | `postgres://root:root@localhost:5433/system_db` | PostgreSQL DSN |
+| `PORT` | `8080` | Port server lắng nghe |
 
-### Example
+## API
 
-```bash
-GET /scenarios/550e8400-e29b-41d4-a716-446655440000
-```
+| Method | Path | Mô tả |
+|--------|------|-------|
+| GET | `/healthz` | Health check |
+| GET | `/api/v1/scenarios` | Danh sách scenario (có phân trang, filter difficulty) |
+| GET | `/api/v1/scenarios/:id` | Chi tiết scenario |
+| POST | `/api/v1/users` | Tạo user |
+| POST | `/api/v1/sessions` | Bắt đầu session mới |
+| GET | `/api/v1/sessions/:id` | Lấy trạng thái session |
+| POST | `/api/v1/sessions/:id/submit` | Submit một lựa chọn |
+| GET | `/api/v1/sessions/:id/summary` | Tổng kết session |
+| POST | `/api/v1/sessions/:id/abandon` | Bỏ dở session |
+| POST | `/api/v1/sessions/:id/restart` | Chơi lại từ đầu |
+| GET | `/api/v1/scenarios/:id/leaderboard` | Leaderboard của scenario |
+| GET | `/api/v1/users/:id/sessions` | Lịch sử session của user |
+| GET | `/api/v1/users/:id/progress` | Tiến độ user qua các scenario |
 
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "title": "Chat App",
-  "description": "Design a real-time chat application",
-  "difficulty": "medium",
-  "steps": [...]
-}
-```
-
-## Database Schema
-
-Các bảng chính:
-
-| Table | Mô tả |
-|-------|-------|
-| `scenarios` | Kịch bản học (Chat App, URL Shortener...) |
-| `steps` | Các bước quyết định trong scenario |
-| `choices` | Các lựa chọn cho mỗi step |
-| `impacts` | Ảnh hưởng của choice lên metrics (latency, cost, scalability) |
-| `explanations` | Giải thích 3 cấp độ (beginner / intermediate / advanced) |
-| `consequences` | Hệ quả của lựa chọn (flag-based) |
-| `users` | Người dùng |
-| `user_sessions` | Phiên chơi của user |
-| `user_choices` | Lịch sử lựa chọn của user |
-
-## Development
-
-### Regenerate sqlc queries
+## Lệnh thường dùng
 
 ```bash
+# Chạy server
+go run cmd/server/main.go
+
+# Build binary
+go build -o system-design-lab ./cmd/server
+
+# Chạy tests
+go test ./...
+
+# Regenerate sqlc (sau khi sửa db/schema.sql hoặc db/query/*.sql)
 sqlc generate
 ```
 
-### Build binary
+## Swagger
 
-```bash
-go build -o system-design-lab ./cmd/server
-```
+Docs tại `http://localhost:8080/swagger/index.html` khi server đang chạy.

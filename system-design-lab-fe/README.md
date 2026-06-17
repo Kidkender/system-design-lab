@@ -1,73 +1,58 @@
-# React + TypeScript + Vite
+# system-design-lab-fe
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React frontend cho [System Design Lab](../README.md).
 
-Currently, two official plugins are available:
+## Yêu cầu
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 18+
+- npm hoặc pnpm
+- Backend đang chạy tại `http://localhost:8080`
 
-## React Compiler
+## Chạy nhanh
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+App chạy tại `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Proxy `/api` → `http://localhost:8080` đã được cấu hình sẵn, không cần thêm gì.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Biến môi trường
+
+Tạo file `.env.local` nếu cần override URL mặc định:
+
+```env
+VITE_API_BASE_URL=/api/v1
 ```
+
+Mặc định đã trỏ đúng qua Vite proxy, chỉ cần đổi khi deploy production.
+
+## Lệnh
+
+```bash
+# Dev server (hot reload)
+npm run dev
+
+# Build production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Type check
+npm run tsc
+```
+
+## Các trang
+
+| Path | Mô tả |
+|------|-------|
+| `/` | Landing page |
+| `/quests` | Danh sách scenario |
+| `/quests/:id/begin` | Bắt đầu quest (nhập username) |
+| `/quests/:id/leaderboard` | Leaderboard của scenario |
+| `/play/:sessionId` | Gameplay — chọn và submit |
+| `/play/:sessionId/summary` | Tổng kết sau khi hoàn thành |
+| `/profile/progress` | Tiến độ cá nhân |
