@@ -1,58 +1,55 @@
 # system-design-lab-fe
 
-React frontend cho [System Design Lab](../README.md).
+React frontend for [System Design Lab](../README.md).
 
-## Yêu cầu
+## Requirements
 
 - Node.js 18+
-- npm hoặc pnpm
-- Backend đang chạy tại `http://localhost:8080`
+- npm or pnpm
+- Backend running at `http://localhost:8080`
 
-## Chạy nhanh
+## Quick Start
 
 ```bash
 npm install
 npm run dev
 ```
 
-App chạy tại `http://localhost:5173`.
+App runs at `http://localhost:5173`.
 
-Proxy `/api` → `http://localhost:8080` đã được cấu hình sẵn, không cần thêm gì.
+The Vite proxy forwards `/api` to `http://localhost:8080` automatically — no extra config needed for local development.
 
-## Biến môi trường
+## Environment Variables
 
-Tạo file `.env.local` nếu cần override URL mặc định:
+Create a `.env.local` file to override the default API URL:
 
 ```env
 VITE_API_BASE_URL=/api/v1
 ```
 
-Mặc định đã trỏ đúng qua Vite proxy, chỉ cần đổi khi deploy production.
+The default works out of the box via the Vite proxy. Only change this for production deployments.
 
-## Lệnh
+## Commands
 
 ```bash
-# Dev server (hot reload)
+# Dev server with hot reload
 npm run dev
 
-# Build production
+# Production build
 npm run build
 
 # Preview production build
 npm run preview
-
-# Type check
-npm run tsc
 ```
 
-## Các trang
+## Pages
 
-| Path | Mô tả |
-|------|-------|
+| Path | Description |
+|------|-------------|
 | `/` | Landing page |
-| `/quests` | Danh sách scenario |
-| `/quests/:id/begin` | Bắt đầu quest (nhập username) |
-| `/quests/:id/leaderboard` | Leaderboard của scenario |
-| `/play/:sessionId` | Gameplay — chọn và submit |
-| `/play/:sessionId/summary` | Tổng kết sau khi hoàn thành |
-| `/profile/progress` | Tiến độ cá nhân |
+| `/quests` | Scenario list |
+| `/quests/:id/begin` | Start a quest |
+| `/quests/:id/leaderboard` | Scenario leaderboard |
+| `/play/:sessionId` | Gameplay — read, choose, submit |
+| `/play/:sessionId/summary` | Session summary and score |
+| `/profile/progress` | Personal progress across all scenarios |

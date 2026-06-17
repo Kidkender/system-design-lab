@@ -1,39 +1,39 @@
 # System Design Lab
 
-Nền tảng học system design thông qua việc đưa ra quyết định thực tế. Thay vì vẽ diagram, bạn phải chọn — và mỗi lựa chọn đều có hậu quả.
+A platform for learning system design through real decisions. Instead of drawing diagrams, you choose — and every choice has consequences.
 
-## Vấn đề
+## The Problem
 
-Dev junior không biết bắt đầu từ đâu khi thiết kế hệ thống. Các công cụ hiện tại chỉ cho vẽ tự do, không có feedback, không giải thích tại sao đúng hay sai.
+Junior developers don't know where to start when designing systems. Existing tools only offer free-form diagramming with no feedback and no explanation of why a decision is right or wrong.
 
-## Giải pháp
+## The Solution
 
-System Design Lab đưa bạn vào các kịch bản thực tế (Chat App, URL Shortener, E-commerce...) và ép bạn đi theo một flow có cấu trúc:
+System Design Lab places you in real-world scenarios (Chat App, URL Shortener, E-commerce...) and guides you through a structured decision flow:
 
 ```
-Câu hỏi → Lựa chọn → Feedback + Metrics → Câu hỏi tiếp theo
+Question → Choice → Feedback + Metrics → Next Question
 ```
 
-Mỗi quyết định ảnh hưởng trực tiếp đến chỉ số hệ thống. Sai → thấy system degraded. Đúng → thấy metrics cải thiện.
+Every decision directly impacts system metrics. Wrong choice → system degrades. Right choice → metrics improve.
 
-## Tính năng
+## Features
 
 **Gameplay**
-- Scenario-based: mỗi bài là một hệ thống thực tế với 5–7 bước quyết định
-- Metrics thay đổi real-time theo từng lựa chọn (latency, cost, scalability)
-- Feedback ngay lập tức sau mỗi bước
-- Giải thích 3 cấp độ: Beginner / Intermediate / Advanced
-- Gợi ý (hint) cho những ai cần thêm context
+- Scenario-based learning: each challenge is a real system with 5–7 decision steps
+- Metrics update in real-time with each choice (latency, cost, scalability)
+- Instant feedback after every step
+- Explanations at 3 levels: Beginner / Intermediate / Advanced
+- Hints available for extra context when needed
 
-**Session**
-- Chế độ Normal: học theo nhịp của mình
-- Chế độ Interview: có giới hạn thời gian, simulate buổi phỏng vấn
-- Abandon và Retry quest bất kỳ lúc nào
+**Sessions**
+- Normal mode: learn at your own pace
+- Interview mode: time-limited, simulates a real system design interview
+- Abandon or retry any quest at any time
 
 **Progress & Leaderboard**
-- Theo dõi tiến độ qua từng scenario
-- Leaderboard top 10 cho mỗi scenario
-- Lịch sử điểm số và số lần hoàn thành
+- Track progress across all scenarios
+- Top 10 leaderboard per scenario
+- Score history and completion stats
 
 ## Tech Stack
 
@@ -42,7 +42,7 @@ Mỗi quyết định ảnh hưởng trực tiếp đến chỉ số hệ thốn
 | Backend | Go, PostgreSQL, sqlc, pgx/v5 |
 | Frontend | React, TypeScript, Vite, TanStack Query |
 
-## Cấu trúc repo
+## Repository Structure
 
 ```
 system-design-lab/
@@ -50,17 +50,13 @@ system-design-lab/
 └── system-design-lab-fe/    # React frontend
 ```
 
-Xem hướng dẫn chạy trong từng thư mục:
+See setup instructions in each directory:
 - [Backend →](./system-design-lab-api/README.md)
 - [Frontend →](./system-design-lab-fe/README.md)
 
-## Screenshots
-
-> Coming soon
-
 ## Roadmap
 
-- [ ] AI Coach — hỏi ngược user, giải thích sâu hơn theo từng tình huống
-- [ ] Visual Architecture — sơ đồ kiến trúc cập nhật theo từng quyết định
-- [ ] Multiplayer — học nhóm, so sánh quyết định
-- [ ] Interview Mode nâng cao — timer, pressure scenarios
+- [ ] AI Coach — asks follow-up questions and explains decisions in depth
+- [ ] Visual Architecture — diagram that updates with each decision
+- [ ] Multiplayer — team learning and decision comparison
+- [ ] Advanced Interview Mode — timed pressure scenarios
