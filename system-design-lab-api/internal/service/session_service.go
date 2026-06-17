@@ -42,6 +42,14 @@ func (s *SessionService) StartSession(ctx context.Context, req *dto.StartSession
 		return nil, errors.New("scenario has no start step")
 	}
 
+	mode := db.SessionModeNormal
+	if req.Mode == "interview" {
+		if !scenario.TimeLimitSeconds.Valid {
+			return nil, errors.New("scenario does not support interview mode: no time limit set")
+		}
+		mode = db.SessionModeInterview
+	}
+
 	metricsJSON, _ := json.Marshal(map[string]float64{
 		"latency":     0,
 		"cost":        0,
@@ -56,6 +64,7 @@ func (s *SessionService) StartSession(ctx context.Context, req *dto.StartSession
 		CurrentStepID: scenario.StartStepID,
 		Metrics:       metricsJSON,
 		Flags:         flagsJSON,
+		Mode:          mode,
 	})
 	if err != nil {
 		return nil, err
@@ -71,14 +80,19 @@ func (s *SessionService) StartSession(ctx context.Context, req *dto.StartSession
 	json.Unmarshal(session.Metrics, &metrics)
 	json.Unmarshal(session.Flags, &flags)
 
-	return &dto.SessionResponse{
+	resp := &dto.SessionResponse{
 		ID:          session.ID.String(),
 		ScenarioID:  session.ScenarioID.String(),
 		CurrentStep: *stepResp,
 		Metrics:     metrics,
 		Flags:       flags,
 		Status:      string(session.Status),
-	}, nil
+		Mode:        string(session.Mode),
+	}
+	if scenario.TimeLimitSeconds.Valid {
+		resp.TimeLimitSeconds = &scenario.TimeLimitSeconds.Int32
+	}
+	return resp, nil
 }
 
 func handleImpactsValue(
@@ -453,13 +467,18 @@ func (s *SessionService) buildStepResponse(ctx context.Context, stepID uuid.UUID
 		choiceResps = append(choiceResps, ch)
 	}
 
-	ctx2 := step.Context.String
-	return &dto.StepResponse{
+	resp := &dto.StepResponse{
 		ID:       step.ID.String(),
 		Question: step.Question,
-		Context:  &ctx2,
 		Choices:  choiceResps,
-	}, nil
+	}
+	if step.Context.Valid && step.Context.String != "" {
+		resp.Context = &step.Context.String
+	}
+	if step.Hint.Valid && step.Hint.String != "" {
+		resp.Hint = &step.Hint.String
+	}
+	return resp, nil
 }
 
 func (s *SessionService) ListSessionsByUser(ctx context.Context, userID uuid.UUID) ([]dto.UserSessionListItem, error) {
@@ -470,12 +489,104 @@ func (s *SessionService) ListSessionsByUser(ctx context.Context, userID uuid.UUI
 
 	items := make([]dto.UserSessionListItem, 0, len(sessions))
 	for _, sess := range sessions {
-		items = append(items, dto.UserSessionListItem{
+		item := dto.UserSessionListItem{
 			ID:         sess.ID.String(),
 			ScenarioID: sess.ScenarioID.String(),
 			Status:     string(sess.Status),
+			Mode:       string(sess.Mode),
 			CreatedAt:  sess.CreatedAt.Time.Format(time.RFC3339),
+		}
+		if sess.CompletedAt.Valid {
+			t := sess.CompletedAt.Time.Format(time.RFC3339)
+			item.CompletedAt = &t
+		}
+		score, err := s.q.GetSessionScore(ctx, sess.ID)
+		if err == nil && score.TotalChoices > 0 {
+			item.Score = float64(score.CorrectChoices) / float64(score.TotalChoices) * 100
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
+
+func (s *SessionService) AbandonSession(ctx context.Context, sessionID uuid.UUID) error {
+	_, err := s.q.AbandonSession(ctx, sessionID)
+	if err != nil {
+		return fmt.Errorf("abandon session: %w", err)
+	}
+	return nil
+}
+
+func (s *SessionService) RestartSession(ctx context.Context, sessionID uuid.UUID) (*dto.SessionResponse, error) {
+	session, err := s.q.GetUserSession(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("session not found: %w", err)
+	}
+
+	req := &dto.StartSessionRequest{
+		UserID:     session.UserID.String(),
+		ScenarioID: session.ScenarioID.String(),
+		Mode:       string(session.Mode),
+	}
+	return s.StartSession(ctx, req)
+}
+
+func (s *SessionService) GetLeaderboard(ctx context.Context, scenarioID uuid.UUID, topN int32) ([]dto.LeaderboardEntry, error) {
+	rows, err := s.q.GetLeaderboardByScenario(ctx, db.GetLeaderboardByScenarioParams{
+		ScenarioID: scenarioID,
+		TopN:       topN,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("leaderboard query: %w", err)
+	}
+
+	entries := make([]dto.LeaderboardEntry, 0, len(rows))
+	for i, r := range rows {
+		score := float64(0)
+		if r.TotalChoices > 0 {
+			score = float64(r.CorrectChoices) / float64(r.TotalChoices) * 100
+		}
+		completedAt := ""
+		if r.CompletedAt.Valid {
+			completedAt = r.CompletedAt.Time.Format(time.RFC3339)
+		}
+		entries = append(entries, dto.LeaderboardEntry{
+			Rank:           i + 1,
+			SessionID:      r.SessionID.String(),
+			UserID:         r.UserID.String(),
+			Username:       r.Username,
+			Score:          score,
+			TotalChoices:   r.TotalChoices,
+			CorrectChoices: r.CorrectChoices,
+			CreatedAt:      r.CreatedAt.Time.Format(time.RFC3339),
+			CompletedAt:    completedAt,
 		})
+	}
+	return entries, nil
+}
+
+func (s *SessionService) GetUserProgress(ctx context.Context, userID uuid.UUID) ([]dto.UserProgressItem, error) {
+	rows, err := s.q.GetScenarioProgressByUser(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("progress query: %w", err)
+	}
+
+	items := make([]dto.UserProgressItem, 0, len(rows))
+	for _, r := range rows {
+		item := dto.UserProgressItem{
+			ScenarioID:  r.ScenarioID.String(),
+			Title:       r.Title,
+			Difficulty:  string(r.Difficulty),
+			Attempts:    r.Attempts,
+			Completions: r.Completions,
+		}
+		if r.LastCompletedAt != nil {
+			if ts, ok := r.LastCompletedAt.(interface{ Format(string) string }); ok {
+				t := ts.Format(time.RFC3339)
+				item.LastCompletedAt = &t
+			}
+		}
+		items = append(items, item)
 	}
 	return items, nil
 }

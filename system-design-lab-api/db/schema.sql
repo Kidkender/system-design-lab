@@ -8,7 +8,8 @@ CREATE TYPE explanation_level AS ENUM ('beginner', 'intermediate', 'advanced');
 
 CREATE TYPE condition_type AS ENUM ('metric', 'flag', 'choice');
 
-CREATE TYPE session_status AS ENUM ('in_progress', 'completed', 'failed');
+CREATE TYPE session_status AS ENUM ('in_progress', 'completed', 'failed', 'abandoned');
+CREATE TYPE session_mode AS ENUM ('normal', 'interview');
 
 CREATE TABLE scenarios (
     id UUID PRIMARY KEY,
@@ -16,6 +17,7 @@ CREATE TABLE scenarios (
     description TEXT,
     start_step_id UUID,
     difficulty difficulty_level NOT NULL DEFAULT 'medium',
+    time_limit_seconds INT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -24,6 +26,7 @@ CREATE TABLE steps (
     scenario_id UUID NOT NULL REFERENCES scenarios(id) ON DELETE CASCADE,
     question TEXT NOT NULL,
     context TEXT,
+    hint TEXT,
     order_index INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -111,6 +114,8 @@ CREATE TABLE user_sessions (
     flags JSONB NOT NULL DEFAULT '{}',
 
     status session_status NOT NULL DEFAULT 'in_progress',
+    mode session_mode NOT NULL DEFAULT 'normal',
+    completed_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 

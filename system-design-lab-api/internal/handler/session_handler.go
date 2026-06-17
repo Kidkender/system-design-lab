@@ -139,9 +139,58 @@ func (h *SessionHandler) GetSessionSummary(w http.ResponseWriter, r *http.Reques
 	response.Success(w, http.StatusOK, resp)
 }
 
+// AbandonSession godoc
+// @Summary      Abandon a session
+// @Tags         sessions
+// @Produce      json
+// @Param        id   path      string  true  "Session UUID"
+// @Success      204
+// @Failure      400  {string}  string
+// @Router       /sessions/{id}/abandon [post]
+func (h *SessionHandler) AbandonSession(w http.ResponseWriter, r *http.Request) {
+	sessionID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	if err := h.service.AbandonSession(r.Context(), sessionID); err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// RestartSession godoc
+// @Summary      Restart a session (creates new session with same scenario)
+// @Tags         sessions
+// @Produce      json
+// @Param        id   path      string  true  "Session UUID"
+// @Success      201  {object}  dto.SessionResponse
+// @Failure      400  {string}  string
+// @Router       /sessions/{id}/restart [post]
+func (h *SessionHandler) RestartSession(w http.ResponseWriter, r *http.Request) {
+	sessionID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	resp, err := h.service.RestartSession(r.Context(), sessionID)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, resp)
+}
+
 func (h *SessionHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /sessions", h.StartSession)
 	mux.HandleFunc("GET /sessions/{id}", h.GetSession)
 	mux.HandleFunc("POST /sessions/{id}/submit", h.SubmitChoice)
 	mux.HandleFunc("GET /sessions/{id}/summary", h.GetSessionSummary)
+	mux.HandleFunc("POST /sessions/{id}/abandon", h.AbandonSession)
+	mux.HandleFunc("POST /sessions/{id}/restart", h.RestartSession)
 }

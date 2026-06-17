@@ -51,6 +51,22 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, user)
 }
 
+func (h *UserHandler) GetUserProgress(w http.ResponseWriter, r *http.Request) {
+	userID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	items, err := h.sessionService.GetUserProgress(r.Context(), userID)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, items)
+}
+
 func (h *UserHandler) ListUserSessions(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
@@ -71,4 +87,5 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /users", h.CreateUser)
 	mux.HandleFunc("GET /users/{id}", h.GetUser)
 	mux.HandleFunc("GET /users/{id}/sessions", h.ListUserSessions)
+	mux.HandleFunc("GET /users/{id}/progress", h.GetUserProgress)
 }

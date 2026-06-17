@@ -11,6 +11,31 @@ import (
 	"github.com/google/uuid"
 )
 
+const abandonSession = `-- name: AbandonSession :one
+UPDATE user_sessions
+SET status = 'abandoned', completed_at = NOW()
+WHERE id = $1::uuid AND status = 'in_progress'
+RETURNING id, user_id, scenario_id, current_step_id, metrics, flags, status, mode, completed_at, created_at
+`
+
+func (q *Queries) AbandonSession(ctx context.Context, dollar_1 uuid.UUID) (UserSession, error) {
+	row := q.db.QueryRow(ctx, abandonSession, dollar_1)
+	var i UserSession
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ScenarioID,
+		&i.CurrentStepID,
+		&i.Metrics,
+		&i.Flags,
+		&i.Status,
+		&i.Mode,
+		&i.CompletedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createUserChoice = `-- name: CreateUserChoice :one
 INSERT INTO user_choices (id, session_id, step_id, choice_id)
 VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid)
@@ -43,9 +68,9 @@ func (q *Queries) CreateUserChoice(ctx context.Context, arg CreateUserChoicePara
 }
 
 const createUserSession = `-- name: CreateUserSession :one
-INSERT INTO user_sessions (id, user_id, scenario_id, current_step_id, metrics, flags, status)
-VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, 'in_progress')
-RETURNING id, user_id, scenario_id, current_step_id, metrics, flags, status, created_at
+INSERT INTO user_sessions (id, user_id, scenario_id, current_step_id, metrics, flags, status, mode)
+VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, 'in_progress', $7)
+RETURNING id, user_id, scenario_id, current_step_id, metrics, flags, status, mode, completed_at, created_at
 `
 
 type CreateUserSessionParams struct {
@@ -55,6 +80,7 @@ type CreateUserSessionParams struct {
 	CurrentStepID uuid.UUID
 	Metrics       []byte
 	Flags         []byte
+	Mode          SessionMode
 }
 
 func (q *Queries) CreateUserSession(ctx context.Context, arg CreateUserSessionParams) (UserSession, error) {
@@ -65,6 +91,7 @@ func (q *Queries) CreateUserSession(ctx context.Context, arg CreateUserSessionPa
 		arg.CurrentStepID,
 		arg.Metrics,
 		arg.Flags,
+		arg.Mode,
 	)
 	var i UserSession
 	err := row.Scan(
@@ -75,6 +102,8 @@ func (q *Queries) CreateUserSession(ctx context.Context, arg CreateUserSessionPa
 		&i.Metrics,
 		&i.Flags,
 		&i.Status,
+		&i.Mode,
+		&i.CompletedAt,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -114,7 +143,7 @@ func (q *Queries) GetUserChoicesBySession(ctx context.Context, dollar_1 uuid.UUI
 }
 
 const getUserSession = `-- name: GetUserSession :one
-SELECT id, user_id, scenario_id, current_step_id, metrics, flags, status, created_at FROM user_sessions
+SELECT id, user_id, scenario_id, current_step_id, metrics, flags, status, mode, completed_at, created_at FROM user_sessions
 WHERE id = $1::uuid
 `
 
@@ -129,13 +158,15 @@ func (q *Queries) GetUserSession(ctx context.Context, dollar_1 uuid.UUID) (UserS
 		&i.Metrics,
 		&i.Flags,
 		&i.Status,
+		&i.Mode,
+		&i.CompletedAt,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getUserSessionForUpdate = `-- name: GetUserSessionForUpdate :one
-SELECT id, user_id, scenario_id, current_step_id, metrics, flags, status, created_at
+SELECT id, user_id, scenario_id, current_step_id, metrics, flags, status, mode, completed_at, created_at
 FROM user_sessions
 WHERE id = $1::uuid
 FOR UPDATE
@@ -152,13 +183,15 @@ func (q *Queries) GetUserSessionForUpdate(ctx context.Context, dollar_1 uuid.UUI
 		&i.Metrics,
 		&i.Flags,
 		&i.Status,
+		&i.Mode,
+		&i.CompletedAt,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const listSessionsByUserID = `-- name: ListSessionsByUserID :many
-SELECT id, user_id, scenario_id, current_step_id, metrics, flags, status, created_at
+SELECT id, user_id, scenario_id, current_step_id, metrics, flags, status, mode, completed_at, created_at
 FROM user_sessions
 WHERE user_id = $1::uuid
 ORDER BY created_at
@@ -181,6 +214,8 @@ func (q *Queries) ListSessionsByUserID(ctx context.Context, dollar_1 uuid.UUID) 
 			&i.Metrics,
 			&i.Flags,
 			&i.Status,
+			&i.Mode,
+			&i.CompletedAt,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -198,9 +233,10 @@ UPDATE user_sessions
 SET current_step_id = $1,
     metrics         = $2,
     flags           = $3,
-    status          = $4
+    status          = $4,
+    completed_at    = CASE WHEN $4::session_status IN ('completed', 'failed', 'abandoned') THEN NOW() ELSE completed_at END
 WHERE id = $5::uuid
-RETURNING id, user_id, scenario_id, current_step_id, metrics, flags, status, created_at
+RETURNING id, user_id, scenario_id, current_step_id, metrics, flags, status, mode, completed_at, created_at
 `
 
 type UpdateUserSessionParams struct {
@@ -228,6 +264,8 @@ func (q *Queries) UpdateUserSession(ctx context.Context, arg UpdateUserSessionPa
 		&i.Metrics,
 		&i.Flags,
 		&i.Status,
+		&i.Mode,
+		&i.CompletedAt,
 		&i.CreatedAt,
 	)
 	return i, err

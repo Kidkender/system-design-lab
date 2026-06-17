@@ -227,12 +227,55 @@ func (ns NullImpactType) Value() (driver.Value, error) {
 	return string(ns.ImpactType), nil
 }
 
+type SessionMode string
+
+const (
+	SessionModeNormal    SessionMode = "normal"
+	SessionModeInterview SessionMode = "interview"
+)
+
+func (e *SessionMode) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = SessionMode(s)
+	case string:
+		*e = SessionMode(s)
+	default:
+		return fmt.Errorf("unsupported scan type for SessionMode: %T", src)
+	}
+	return nil
+}
+
+type NullSessionMode struct {
+	SessionMode SessionMode
+	Valid       bool // Valid is true if SessionMode is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSessionMode) Scan(value interface{}) error {
+	if value == nil {
+		ns.SessionMode, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.SessionMode.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSessionMode) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.SessionMode), nil
+}
+
 type SessionStatus string
 
 const (
 	SessionStatusInProgress SessionStatus = "in_progress"
 	SessionStatusCompleted  SessionStatus = "completed"
 	SessionStatusFailed     SessionStatus = "failed"
+	SessionStatusAbandoned  SessionStatus = "abandoned"
 )
 
 func (e *SessionStatus) Scan(src interface{}) error {
@@ -318,12 +361,13 @@ type Impact struct {
 }
 
 type Scenario struct {
-	ID          uuid.UUID
-	Title       string
-	Description pgtype.Text
-	StartStepID uuid.UUID
-	Difficulty  DifficultyLevel
-	CreatedAt   pgtype.Timestamp
+	ID               uuid.UUID
+	Title            string
+	Description      pgtype.Text
+	StartStepID      uuid.UUID
+	Difficulty       DifficultyLevel
+	TimeLimitSeconds pgtype.Int4
+	CreatedAt        pgtype.Timestamp
 }
 
 type Step struct {
@@ -331,6 +375,7 @@ type Step struct {
 	ScenarioID uuid.UUID
 	Question   string
 	Context    pgtype.Text
+	Hint       pgtype.Text
 	OrderIndex int32
 	CreatedAt  pgtype.Timestamp
 }
@@ -359,5 +404,7 @@ type UserSession struct {
 	Metrics       []byte
 	Flags         []byte
 	Status        SessionStatus
+	Mode          SessionMode
+	CompletedAt   pgtype.Timestamp
 	CreatedAt     pgtype.Timestamp
 }

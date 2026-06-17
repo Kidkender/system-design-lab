@@ -24,9 +24,9 @@ func (q *Queries) CountSteps(ctx context.Context) (int64, error) {
 }
 
 const createStep = `-- name: CreateStep :one
-INSERT INTO steps (id, scenario_id, question, context, order_index)
-VALUES ($1::uuid, $2::uuid, $3, $4, $5)
-RETURNING id, scenario_id, question, context, order_index, created_at
+INSERT INTO steps (id, scenario_id, question, context, hint, order_index)
+VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6)
+RETURNING id, scenario_id, question, context, hint, order_index, created_at
 `
 
 type CreateStepParams struct {
@@ -34,6 +34,7 @@ type CreateStepParams struct {
 	Column2    uuid.UUID
 	Question   string
 	Context    pgtype.Text
+	Hint       pgtype.Text
 	OrderIndex int32
 }
 
@@ -43,6 +44,7 @@ func (q *Queries) CreateStep(ctx context.Context, arg CreateStepParams) (Step, e
 		arg.Column2,
 		arg.Question,
 		arg.Context,
+		arg.Hint,
 		arg.OrderIndex,
 	)
 	var i Step
@@ -51,6 +53,7 @@ func (q *Queries) CreateStep(ctx context.Context, arg CreateStepParams) (Step, e
 		&i.ScenarioID,
 		&i.Question,
 		&i.Context,
+		&i.Hint,
 		&i.OrderIndex,
 		&i.CreatedAt,
 	)
@@ -94,6 +97,7 @@ SELECT
     scenario_id,
     question,
     context,
+    hint,
     order_index
 FROM steps
 WHERE id = $1::uuid
@@ -104,6 +108,7 @@ type GetStepRow struct {
 	ScenarioID uuid.UUID
 	Question   string
 	Context    pgtype.Text
+	Hint       pgtype.Text
 	OrderIndex int32
 }
 
@@ -115,17 +120,19 @@ func (q *Queries) GetStep(ctx context.Context, dollar_1 uuid.UUID) (GetStepRow, 
 		&i.ScenarioID,
 		&i.Question,
 		&i.Context,
+		&i.Hint,
 		&i.OrderIndex,
 	)
 	return i, err
 }
 
 const getStepsByIDs = `-- name: GetStepsByIDs :many
-SELECT 
+SELECT
     id,
     scenario_id,
     question,
     context,
+    hint,
     order_index
 FROM steps
 WHERE id IN ($1::uuid[])
@@ -137,6 +144,7 @@ type GetStepsByIDsRow struct {
 	ScenarioID uuid.UUID
 	Question   string
 	Context    pgtype.Text
+	Hint       pgtype.Text
 	OrderIndex int32
 }
 
@@ -154,6 +162,7 @@ func (q *Queries) GetStepsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]Ge
 			&i.ScenarioID,
 			&i.Question,
 			&i.Context,
+			&i.Hint,
 			&i.OrderIndex,
 		); err != nil {
 			return nil, err
@@ -170,7 +179,8 @@ const getStepsByScenario = `-- name: GetStepsByScenario :many
 SELECT
     id,
     question,
-    context
+    context,
+    hint
 FROM steps
 WHERE scenario_id = $1::uuid
 `
@@ -179,6 +189,7 @@ type GetStepsByScenarioRow struct {
 	ID       uuid.UUID
 	Question string
 	Context  pgtype.Text
+	Hint     pgtype.Text
 }
 
 func (q *Queries) GetStepsByScenario(ctx context.Context, dollar_1 uuid.UUID) ([]GetStepsByScenarioRow, error) {
@@ -190,7 +201,12 @@ func (q *Queries) GetStepsByScenario(ctx context.Context, dollar_1 uuid.UUID) ([
 	var items []GetStepsByScenarioRow
 	for rows.Next() {
 		var i GetStepsByScenarioRow
-		if err := rows.Scan(&i.ID, &i.Question, &i.Context); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Question,
+			&i.Context,
+			&i.Hint,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -205,7 +221,8 @@ const getStepsByScenarioPaginated = `-- name: GetStepsByScenarioPaginated :many
 SELECT
     id,
     question,
-    context
+    context,
+    hint
 FROM steps
 WHERE scenario_id = $1::uuid
 ORDER BY order_index
@@ -222,6 +239,7 @@ type GetStepsByScenarioPaginatedRow struct {
 	ID       uuid.UUID
 	Question string
 	Context  pgtype.Text
+	Hint     pgtype.Text
 }
 
 func (q *Queries) GetStepsByScenarioPaginated(ctx context.Context, arg GetStepsByScenarioPaginatedParams) ([]GetStepsByScenarioPaginatedRow, error) {
@@ -233,7 +251,12 @@ func (q *Queries) GetStepsByScenarioPaginated(ctx context.Context, arg GetStepsB
 	var items []GetStepsByScenarioPaginatedRow
 	for rows.Next() {
 		var i GetStepsByScenarioPaginatedRow
-		if err := rows.Scan(&i.ID, &i.Question, &i.Context); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Question,
+			&i.Context,
+			&i.Hint,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -248,7 +271,8 @@ const getStepsPaginated = `-- name: GetStepsPaginated :many
 SELECT
     id,
     question,
-    context
+    context,
+    hint
 FROM steps
 ORDER BY order_index
 LIMIT $1 OFFSET $2
@@ -263,6 +287,7 @@ type GetStepsPaginatedRow struct {
 	ID       uuid.UUID
 	Question string
 	Context  pgtype.Text
+	Hint     pgtype.Text
 }
 
 func (q *Queries) GetStepsPaginated(ctx context.Context, arg GetStepsPaginatedParams) ([]GetStepsPaginatedRow, error) {
@@ -274,7 +299,12 @@ func (q *Queries) GetStepsPaginated(ctx context.Context, arg GetStepsPaginatedPa
 	var items []GetStepsPaginatedRow
 	for rows.Next() {
 		var i GetStepsPaginatedRow
-		if err := rows.Scan(&i.ID, &i.Question, &i.Context); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Question,
+			&i.Context,
+			&i.Hint,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -305,15 +335,16 @@ func (q *Queries) SetStartStepIfNull(ctx context.Context, arg SetStartStepIfNull
 
 const updateStep = `-- name: UpdateStep :one
 UPDATE steps
-SET question = $2, context = $3, order_index = $4
+SET question = $2, context = $3, hint = $4, order_index = $5
 WHERE id = $1::uuid
-RETURNING id, scenario_id, question, context, order_index, created_at
+RETURNING id, scenario_id, question, context, hint, order_index, created_at
 `
 
 type UpdateStepParams struct {
 	Column1    uuid.UUID
 	Question   string
 	Context    pgtype.Text
+	Hint       pgtype.Text
 	OrderIndex int32
 }
 
@@ -322,6 +353,7 @@ func (q *Queries) UpdateStep(ctx context.Context, arg UpdateStepParams) (Step, e
 		arg.Column1,
 		arg.Question,
 		arg.Context,
+		arg.Hint,
 		arg.OrderIndex,
 	)
 	var i Step
@@ -330,6 +362,7 @@ func (q *Queries) UpdateStep(ctx context.Context, arg UpdateStepParams) (Step, e
 		&i.ScenarioID,
 		&i.Question,
 		&i.Context,
+		&i.Hint,
 		&i.OrderIndex,
 		&i.CreatedAt,
 	)

@@ -3,15 +3,19 @@ package dto
 type StartSessionRequest struct {
 	UserID     string `json:"userId" validate:"required,uuid"`
 	ScenarioID string `json:"scenarioId" validate:"required,uuid"`
+	Mode       string `json:"mode" validate:"omitempty,oneof=normal interview"`
 }
 
 type SessionResponse struct {
-	ID          string       `json:"id"`
-	ScenarioID  string       `json:"scenarioId"`
-	CurrentStep StepResponse `json:"currentStep"`
-	Metrics     map[string]float64 `json:"metrics"`
-	Flags       map[string]bool    `json:"flags"`
-	Status      string             `json:"status"`
+	ID               string             `json:"id"`
+	ScenarioID       string             `json:"scenarioId"`
+	CurrentStep      StepResponse       `json:"currentStep"`
+	Metrics          map[string]float64 `json:"metrics"`
+	Flags            map[string]bool    `json:"flags"`
+	Status           string             `json:"status"`
+	Mode             string             `json:"mode"`
+	TimeLimitSeconds *int32             `json:"timeLimitSeconds,omitempty"`
+	TimeElapsedSecs  int64              `json:"timeElapsedSeconds"`
 }
 
 type SubmitChoiceRequest struct {
@@ -47,8 +51,33 @@ type SubmitChoiceResponse struct {
 }
 
 type UserSessionListItem struct {
-	ID         string `json:"id"`
-	ScenarioID string `json:"scenarioId"`
-	Status     string `json:"status"`
-	CreatedAt  string `json:"createdAt"`
+	ID          string  `json:"id"`
+	ScenarioID  string  `json:"scenarioId"`
+	Status      string  `json:"status"`
+	Mode        string  `json:"mode"`
+	Score       float64 `json:"score"`
+	CreatedAt   string  `json:"createdAt"`
+	CompletedAt *string `json:"completedAt,omitempty"`
+}
+
+type LeaderboardEntry struct {
+	Rank           int     `json:"rank"`
+	SessionID      string  `json:"sessionId"`
+	UserID         string  `json:"userId"`
+	Username       string  `json:"username"`
+	Score          float64 `json:"score"`
+	TotalChoices   int32   `json:"totalChoices"`
+	CorrectChoices int32   `json:"correctChoices"`
+	CreatedAt      string  `json:"createdAt"`
+	CompletedAt    string  `json:"completedAt"`
+}
+
+type UserProgressItem struct {
+	ScenarioID      string  `json:"scenarioId"`
+	Title           string  `json:"title"`
+	Difficulty      string  `json:"difficulty"`
+	Attempts        int32   `json:"attempts"`
+	Completions     int32   `json:"completions"`
+	BestScore       float64 `json:"bestScore"`
+	LastCompletedAt *string `json:"lastCompletedAt,omitempty"`
 }

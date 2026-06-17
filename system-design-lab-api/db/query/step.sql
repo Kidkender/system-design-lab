@@ -2,7 +2,8 @@
 SELECT
     id,
     question,
-    context
+    context,
+    hint
 FROM steps
 WHERE scenario_id = $1::uuid;
 
@@ -10,7 +11,8 @@ WHERE scenario_id = $1::uuid;
 SELECT
     id,
     question,
-    context
+    context,
+    hint
 FROM steps
 WHERE scenario_id = $1::uuid
 ORDER BY order_index
@@ -20,7 +22,8 @@ LIMIT $2 OFFSET $3;
 SELECT
     id,
     question,
-    context
+    context,
+    hint
 FROM steps
 ORDER BY order_index
 LIMIT $1 OFFSET $2;
@@ -31,6 +34,7 @@ SELECT
     scenario_id,
     question,
     context,
+    hint,
     order_index
 FROM steps
 WHERE id = $1::uuid;
@@ -43,15 +47,15 @@ DELETE FROM steps
 WHERE id = $1::uuid;
 
 -- name: CreateStep :one
-INSERT INTO steps (id, scenario_id, question, context, order_index)
-VALUES ($1::uuid, $2::uuid, $3, $4, $5)
-RETURNING id, scenario_id, question, context, order_index, created_at;
+INSERT INTO steps (id, scenario_id, question, context, hint, order_index)
+VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6)
+RETURNING id, scenario_id, question, context, hint, order_index, created_at;
 
 -- name: UpdateStep :one
 UPDATE steps
-SET question = $2, context = $3, order_index = $4
+SET question = $2, context = $3, hint = $4, order_index = $5
 WHERE id = $1::uuid
-RETURNING id, scenario_id, question, context, order_index, created_at;
+RETURNING id, scenario_id, question, context, hint, order_index, created_at;
 
 -- name: ExistsStepOrderIndex :one
 SELECT EXISTS(
@@ -69,11 +73,12 @@ WHERE
     AND start_step_id IS NULL;
 
 -- name: GetStepsByIDs :many
-SELECT 
+SELECT
     id,
     scenario_id,
     question,
     context,
+    hint,
     order_index
 FROM steps
 WHERE id IN ($1::uuid[])

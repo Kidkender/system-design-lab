@@ -74,21 +74,24 @@ func (q *Queries) DeleteScenario(ctx context.Context, dollar_1 uuid.UUID) error 
 }
 
 const getScenario = `-- name: GetScenario :one
-
 SELECT
     id,
     title,
     description,
-    start_step_id
+    start_step_id,
+    difficulty,
+    time_limit_seconds
 FROM scenarios
-WHERE id =$1::uuid
+WHERE id = $1::uuid
 `
 
 type GetScenarioRow struct {
-	ID          uuid.UUID
-	Title       string
-	Description pgtype.Text
-	StartStepID uuid.UUID
+	ID               uuid.UUID
+	Title            string
+	Description      pgtype.Text
+	StartStepID      uuid.UUID
+	Difficulty       DifficultyLevel
+	TimeLimitSeconds pgtype.Int4
 }
 
 func (q *Queries) GetScenario(ctx context.Context, dollar_1 uuid.UUID) (GetScenarioRow, error) {
@@ -99,6 +102,8 @@ func (q *Queries) GetScenario(ctx context.Context, dollar_1 uuid.UUID) (GetScena
 		&i.Title,
 		&i.Description,
 		&i.StartStepID,
+		&i.Difficulty,
+		&i.TimeLimitSeconds,
 	)
 	return i, err
 }
@@ -147,7 +152,7 @@ func (q *Queries) GetScenarios(ctx context.Context) ([]GetScenariosRow, error) {
 }
 
 const listScenariosPaginated = `-- name: ListScenariosPaginated :many
-SELECT id, title, description, start_step_id, difficulty, created_at
+SELECT id, title, description, start_step_id, difficulty, time_limit_seconds, created_at
 FROM scenarios
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
@@ -173,6 +178,7 @@ func (q *Queries) ListScenariosPaginated(ctx context.Context, arg ListScenariosP
 			&i.Description,
 			&i.StartStepID,
 			&i.Difficulty,
+			&i.TimeLimitSeconds,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

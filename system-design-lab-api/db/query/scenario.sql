@@ -1,12 +1,13 @@
 -- name: GetScenario :one
-
 SELECT
     id,
     title,
     description,
-    start_step_id
+    start_step_id,
+    difficulty,
+    time_limit_seconds
 FROM scenarios
-WHERE id =$1::uuid;
+WHERE id = $1::uuid;
 -- name: GetScenarios :many
 
 SELECT

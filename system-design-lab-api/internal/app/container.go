@@ -35,7 +35,7 @@ func NewContainer(conn *pgxpool.Pool) *Container {
 	userService := service.NewUserService(q)
 
 	return &Container{
-		ScenarioHandler:    handler.NewScenarioHandler(scenarioService),
+		ScenarioHandler:    handler.NewScenarioHandler(scenarioService, sessionService),
 		StepHandler:        handler.NewStepHandler(stepService),
 		ChoiceHandler:      handler.NewChoiceHandler(choiceService),
 		SessionHandler:     handler.NewSessionHandler(sessionService),

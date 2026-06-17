@@ -12,11 +12,12 @@ import (
 )
 
 type ScenarioHandler struct {
-	service *service.ScenarioService
+	service        *service.ScenarioService
+	sessionService *service.SessionService
 }
 
-func NewScenarioHandler(s *service.ScenarioService) *ScenarioHandler {
-	return &ScenarioHandler{service: s}
+func NewScenarioHandler(s *service.ScenarioService, sessionService *service.SessionService) *ScenarioHandler {
+	return &ScenarioHandler{service: s, sessionService: sessionService}
 }
 
 // GetScenariosPaginated godoc
@@ -108,8 +109,42 @@ func (h *ScenarioHandler) GetScenario(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, resp)
 }
 
+// GetLeaderboard godoc
+// @Summary      Get leaderboard for a scenario
+// @Tags         scenarios
+// @Produce      json
+// @Param        id     path      string  true   "Scenario UUID"
+// @Param        top_n  query     int     false  "Number of entries (default 10)"
+// @Success      200    {array}   dto.LeaderboardEntry
+// @Failure      400    {string}  string
+// @Router       /scenarios/{id}/leaderboard [get]
+func (h *ScenarioHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
+	scenarioID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	topN := int32(10)
+	if v := r.URL.Query().Get("top_n"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err == nil && n > 0 {
+			topN = int32(n)
+		}
+	}
+
+	entries, err := h.sessionService.GetLeaderboard(r.Context(), scenarioID, topN)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, entries)
+}
+
 func (h *ScenarioHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /scenarios", h.GetScenariosPaginated)
 	mux.HandleFunc("POST /scenarios", h.CreateScenario)
 	mux.HandleFunc("GET /scenarios/{id}", h.GetScenario)
+	mux.HandleFunc("GET /scenarios/{id}/leaderboard", h.GetLeaderboard)
 }
