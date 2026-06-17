@@ -81,8 +81,32 @@ func (s *SessionService) StartSession(ctx context.Context, req *dto.StartSession
 	}, nil
 }
 
+func handleImpactsValue(
+	impactType db.ImpactType,
+	metrics map[string]float64,
+	metric string, value float64,
+) map[string]float64 {
+	switch impactType {
+	case db.ImpactTypeAdd:
+		metrics[metric] += value
+	case db.ImpactTypeMultiply:
+		metrics[metric] *= value
+	case db.ImpactTypeSet:
+		metrics[metric] = value
+	}
+	return metrics
+}
+
 func (s *SessionService) SubmitChoice(ctx context.Context, sessionID uuid.UUID, req *dto.SubmitChoiceRequest) (*dto.SubmitChoiceResponse, error) {
-	session, err := s.q.GetUserSession(ctx, sessionID)
+	// Persist choice + session update atomically
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := s.q.WithTx(tx)
+	session, err := qtx.GetUserSession(ctx, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("session not found: %w", err)
 	}
@@ -96,7 +120,7 @@ func (s *SessionService) SubmitChoice(ctx context.Context, sessionID uuid.UUID, 
 		return nil, err
 	}
 
-	choice, err := s.q.GetChoice(ctx, choiceID)
+	choice, err := qtx.GetChoice(ctx, choiceID)
 	if err != nil {
 		return nil, fmt.Errorf("choice not found: %w", err)
 	}
@@ -105,24 +129,15 @@ func (s *SessionService) SubmitChoice(ctx context.Context, sessionID uuid.UUID, 
 		return nil, errors.New("choice does not belong to current step")
 	}
 
-	// Record user choice (will be committed inside the transaction below)
 	newChoiceID := uuid.New()
 
-	// Apply impacts to metrics
 	var metrics map[string]float64
 	json.Unmarshal(session.Metrics, &metrics)
 
-	impacts, _ := s.q.GetImpactsByChoiceIDs(ctx, []uuid.UUID{choiceID})
+	impacts, _ := qtx.GetImpactsByChoiceIDs(ctx, []uuid.UUID{choiceID})
 	for _, impact := range impacts {
 		metric := string(impact.Metric)
-		switch impact.Type {
-		case db.ImpactTypeAdd:
-			metrics[metric] += impact.Value
-		case db.ImpactTypeMultiply:
-			metrics[metric] *= impact.Value
-		case db.ImpactTypeSet:
-			metrics[metric] = impact.Value
-		}
+		metrics = handleImpactsValue(impact.Type, metrics, metric, impact.Value)
 	}
 
 	metricsJSON, _ := json.Marshal(metrics)
@@ -134,7 +149,7 @@ func (s *SessionService) SubmitChoice(ctx context.Context, sessionID uuid.UUID, 
 		flags = map[string]bool{}
 	}
 
-	consequences, _ := s.q.GetConsequencesByChoiceIDs(ctx, []uuid.UUID{choiceID})
+	consequences, _ := qtx.GetConsequencesByChoiceIDs(ctx, []uuid.UUID{choiceID})
 	for _, c := range consequences {
 		flags[c.Keys] = c.Value
 	}
@@ -142,21 +157,20 @@ func (s *SessionService) SubmitChoice(ctx context.Context, sessionID uuid.UUID, 
 	flagsJSON, _ := json.Marshal(flags)
 
 	// Fetch explanations for the chosen option
-	explanationRows, _ := s.q.GetExplanationsByChoiceIDs(ctx, []uuid.UUID{choiceID})
+	explanationRows, _ := qtx.GetExplanationsByChoiceIDs(ctx, []uuid.UUID{choiceID})
 	explanations := make(map[string]string, len(explanationRows))
 	for _, e := range explanationRows {
 		explanations[string(e.Level)] = e.Content
 	}
 
 	// Collect prior choice IDs for condition evaluation (includes current choice)
-	priorChoices, _ := s.q.GetUserChoicesBySession(ctx, session.ID)
+	priorChoices, _ := qtx.GetUserChoicesBySession(ctx, session.ID)
 	priorChoiceIDs := make(map[uuid.UUID]bool, len(priorChoices)+1)
 	for _, pc := range priorChoices {
 		priorChoiceIDs[pc.ChoiceID] = true
 	}
 	priorChoiceIDs[choiceID] = true
 
-	// Determine next step and status
 	nextStepID := choice.NextStepID
 	status := db.SessionStatusInProgress
 	isCompleted := false
@@ -170,21 +184,11 @@ func (s *SessionService) SubmitChoice(ctx context.Context, sessionID uuid.UUID, 
 			return nil, fmt.Errorf("evaluating conditions: %w", err)
 		}
 		if !ok {
-			// Next step conditions not met — end the session
 			status = db.SessionStatusCompleted
 			isCompleted = true
 			nextStepID = uuid.Nil
 		}
 	}
-
-	// Persist choice + session update atomically
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("begin transaction: %w", err)
-	}
-	defer tx.Rollback(ctx) //nolint:errcheck
-
-	qtx := s.q.WithTx(tx)
 
 	_, err = qtx.CreateUserChoice(ctx, db.CreateUserChoiceParams{
 		ID:        newChoiceID,
@@ -211,7 +215,6 @@ func (s *SessionService) SubmitChoice(ctx context.Context, sessionID uuid.UUID, 
 		return nil, fmt.Errorf("commit transaction: %w", err)
 	}
 
-	// Build feedback from beginner-level explanation; fall back to generic text
 	feedback := ""
 	if text, ok := explanations["beginner"]; ok && text != "" {
 		if choice.IsCorrect {

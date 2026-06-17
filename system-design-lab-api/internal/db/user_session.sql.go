@@ -134,6 +134,29 @@ func (q *Queries) GetUserSession(ctx context.Context, dollar_1 uuid.UUID) (UserS
 	return i, err
 }
 
+const getUserSessionForUpdate = `-- name: GetUserSessionForUpdate :one
+SELECT id, user_id, scenario_id, current_step_id, metrics, flags, status, created_at
+FROM user_sessions
+WHERE id = $1::uuid
+FOR UPDATE
+`
+
+func (q *Queries) GetUserSessionForUpdate(ctx context.Context, dollar_1 uuid.UUID) (UserSession, error) {
+	row := q.db.QueryRow(ctx, getUserSessionForUpdate, dollar_1)
+	var i UserSession
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ScenarioID,
+		&i.CurrentStepID,
+		&i.Metrics,
+		&i.Flags,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listSessionsByUserID = `-- name: ListSessionsByUserID :many
 SELECT id, user_id, scenario_id, current_step_id, metrics, flags, status, created_at
 FROM user_sessions

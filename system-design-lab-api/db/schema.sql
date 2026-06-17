@@ -121,3 +121,6 @@ CREATE TABLE user_choices (
     choice_id UUID NOT NULL REFERENCES choices(id) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE user_choices
+ADD CONSTRAINT uq_session_step UNIQUE (session_id, step_id);

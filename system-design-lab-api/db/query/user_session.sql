@@ -32,3 +32,9 @@ SELECT *
 FROM user_sessions
 WHERE user_id = $1::uuid
 ORDER BY created_at;
+
+-- name: GetUserSessionForUpdate :one
+SELECT *
+FROM user_sessions
+WHERE id = $1::uuid
+FOR UPDATE;
