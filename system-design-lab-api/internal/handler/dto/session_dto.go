@@ -45,3 +45,10 @@ type SubmitChoiceResponse struct {
 	NextStep     *StepResponse      `json:"nextStep"`
 	IsCompleted  bool               `json:"isCompleted"`
 }
+
+type UserSessionListItem struct {
+	ID         string `json:"id"`
+	ScenarioID string `json:"scenarioId"`
+	Status     string `json:"status"`
+	CreatedAt  string `json:"createdAt"`
+}

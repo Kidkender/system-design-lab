@@ -462,10 +462,20 @@ func (s *SessionService) buildStepResponse(ctx context.Context, stepID uuid.UUID
 	}, nil
 }
 
-// func (s *SessionService) GetSessionByUserID(ctx context.Context, userID uuid.UUID) (*dto.SessionResponse, error) {
-// 	session, err := s.q.GetSession(ctx, userID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (s *SessionService) ListSessionsByUser(ctx context.Context, userID uuid.UUID) ([]dto.UserSessionListItem, error) {
+	sessions, err := s.q.ListSessionsByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("list sessions: %w", err)
+	}
 
-// }
+	items := make([]dto.UserSessionListItem, 0, len(sessions))
+	for _, sess := range sessions {
+		items = append(items, dto.UserSessionListItem{
+			ID:         sess.ID.String(),
+			ScenarioID: sess.ScenarioID.String(),
+			Status:     string(sess.Status),
+			CreatedAt:  sess.CreatedAt.Time.Format(time.RFC3339),
+		})
+	}
+	return items, nil
+}

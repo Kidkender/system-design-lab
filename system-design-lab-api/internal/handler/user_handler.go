@@ -11,11 +11,12 @@ import (
 )
 
 type UserHandler struct {
-	service *service.UserService
+	service        *service.UserService
+	sessionService *service.SessionService
 }
 
-func NewUserHandler(s *service.UserService) *UserHandler {
-	return &UserHandler{service: s}
+func NewUserHandler(s *service.UserService, sessionService *service.SessionService) *UserHandler {
+	return &UserHandler{service: s, sessionService: sessionService}
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +51,24 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, user)
 }
 
+func (h *UserHandler) ListUserSessions(w http.ResponseWriter, r *http.Request) {
+	userID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	items, err := h.sessionService.ListSessionsByUser(r.Context(), userID)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, items)
+}
+
 func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /users", h.CreateUser)
 	mux.HandleFunc("GET /users/{id}", h.GetUser)
+	mux.HandleFunc("GET /users/{id}/sessions", h.ListUserSessions)
 }

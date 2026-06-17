@@ -32,7 +32,7 @@ func NewContainer(conn *pgxpool.Pool) *Container {
 	explanationService := service.NewExplanationService(q)
 	consequenceService := service.NewConsequenceService(q)
 	conditionService := service.NewConditionService(q)
-	userServce := service.NewUserService(q)
+	userService := service.NewUserService(q)
 
 	return &Container{
 		ScenarioHandler:    handler.NewScenarioHandler(scenarioService),
@@ -43,7 +43,7 @@ func NewContainer(conn *pgxpool.Pool) *Container {
 		ExplanationHandler: handler.NewExplanationHandler(explanationService),
 		ConsequenceHandler: handler.NewConsequenceHandler(consequenceService),
 		ConditionHandler:   handler.NewConditionHandler(conditionService),
-		UserHandler:        handler.NewUserHandler(userServce),
+		UserHandler:        handler.NewUserHandler(userService, sessionService),
 	}
 }
 

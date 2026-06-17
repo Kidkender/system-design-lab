@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/kidkender/system-design-lab/internal/common/response"
@@ -74,9 +73,13 @@ func (h *ScenarioHandler) CreateScenario(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	h.service.CreateScenario(r.Context(), &req)
+	id, err := h.service.CreateScenario(r.Context(), &req)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
 
-	w.WriteHeader(http.StatusCreated)
+	response.Success(w, http.StatusCreated, map[string]string{"id": id.String()})
 }
 
 // GetScenario godoc
@@ -89,8 +92,7 @@ func (h *ScenarioHandler) CreateScenario(w http.ResponseWriter, r *http.Request)
 // @Failure      500  {string}  string
 // @Router       /scenarios/{id} [get]
 func (h *ScenarioHandler) GetScenario(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		response.Error(w, err)
 		return

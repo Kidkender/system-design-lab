@@ -26,7 +26,7 @@ func NewScenarioService(q *db.Queries) *ScenarioService {
 func (s *ScenarioService) CreateScenario(
 	ctx context.Context,
 	req *dto.CreateScenarioRequest,
-) error {
+) (uuid.UUID, error) {
 	scenario, err := s.q.CreateScenario(
 		ctx,
 		db.CreateScenarioParams{
@@ -37,12 +37,11 @@ func (s *ScenarioService) CreateScenario(
 		},
 	)
 	if err != nil {
-		slog.Error("Failed to create scenario", "error", err)
-		return apperror.BadRequest("Create scenario failed")
+		slog.Error("failed to create scenario", "error", err)
+		return uuid.Nil, apperror.InternalServerError("create scenario failed")
 	}
 
-	slog.Info("Scenario %s created", "id", scenario.ID)
-	return nil
+	return scenario.ID, nil
 }
 
 func (s *ScenarioService) GetScenario(ctx context.Context, id uuid.UUID) (*dto.ScenarioResponse, error) {
