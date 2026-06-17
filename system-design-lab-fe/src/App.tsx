@@ -6,6 +6,8 @@ import { ScenariosRoute } from './routes/ScenariosRoute'
 import { SessionStartRoute } from './routes/SessionStartRoute'
 import { PlayRoute } from './routes/PlayRoute'
 import { SummaryRoute } from './routes/SummaryRoute'
+import { LeaderboardRoute } from './routes/LeaderboardRoute'
+import { ProgressRoute } from './routes/ProgressRoute'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,8 +40,10 @@ export default function App() {
                 <Routes>
                   <Route path="quests" element={<ScenariosRoute />} />
                   <Route path="quests/:scenarioId/begin" element={<SessionStartRoute />} />
+                  <Route path="quests/:scenarioId/leaderboard" element={<LeaderboardRoute />} />
                   <Route path="play/:sessionId" element={<PlayRoute />} />
                   <Route path="play/:sessionId/summary" element={<SummaryRoute />} />
+                  <Route path="profile/progress" element={<ProgressRoute />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AppShell>

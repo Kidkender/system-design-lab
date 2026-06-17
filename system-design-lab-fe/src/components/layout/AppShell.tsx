@@ -16,6 +16,9 @@ export function AppShell({ children }: AppShellProps) {
           <Link to={PATHS.quests} className="font-['Press_Start_2P'] text-[8px] text-[var(--parchment-dim)] no-underline hover:text-[var(--gold)] transition-none">
             QUESTS
           </Link>
+          <Link to={PATHS.progress} className="font-['Press_Start_2P'] text-[8px] text-[var(--parchment-dim)] no-underline hover:text-[var(--gold)] transition-none">
+            PROGRESS
+          </Link>
         </nav>
       </header>
 

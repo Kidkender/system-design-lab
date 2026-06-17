@@ -1,6 +1,7 @@
-import { useParams, Link } from 'react-router-dom'
+import { useState } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { getSessionSummary } from '@/features/session/api'
+import { getSessionSummary, restartSession } from '@/features/session/api'
 import { MetricsPanel } from '@/features/metrics/components/MetricsPanel'
 import { PixelHeading } from '@/components/pixel/PixelHeading'
 import { PixelPanel } from '@/components/pixel/PixelPanel'
@@ -31,6 +32,19 @@ function ChoiceLogItem({ entry, index }: { entry: ChoiceLogEntry; index: number 
 
 export function SummaryRoute() {
   const { sessionId } = useParams<{ sessionId: string }>()
+  const navigate = useNavigate()
+  const [isRestarting, setIsRestarting] = useState(false)
+
+  async function handleRestart() {
+    if (!sessionId) return
+    setIsRestarting(true)
+    try {
+      const newSession = await restartSession(sessionId)
+      navigate(PATHS.play(newSession.id))
+    } finally {
+      setIsRestarting(false)
+    }
+  }
 
   const { data: summary, isLoading, isError } = useQuery({
     queryKey: ['summary', sessionId],
@@ -83,6 +97,14 @@ export function SummaryRoute() {
         <aside className="lg:w-56 flex flex-col gap-4">
           <PixelHeading level={2} className="text-sm">FINAL STATS</PixelHeading>
           <MetricsPanel metrics={summary.metrics} />
+          <PixelButton
+            variant="default"
+            className="w-full justify-center"
+            onClick={handleRestart}
+            disabled={isRestarting}
+          >
+            {isRestarting ? '...' : '↺ RETRY QUEST'}
+          </PixelButton>
           <Link to={PATHS.quests}>
             <PixelButton variant="gold" className="w-full justify-center">
               ▶ NEW QUEST

@@ -14,11 +14,18 @@ function ScenarioCard({ scenario }: { scenario: ScenarioListItem }) {
         {scenario.title}
       </PixelHeading>
       <p className="text-[var(--parchment-dim)] text-sm flex-1">{scenario.description}</p>
-      <Link to={PATHS.questBegin(scenario.id)}>
-        <PixelButton variant="gold" className="w-full justify-center">
-          ▶ ACCEPT QUEST
-        </PixelButton>
-      </Link>
+      <div className="flex gap-2">
+        <Link to={PATHS.questBegin(scenario.id)} className="flex-1">
+          <PixelButton variant="gold" className="w-full justify-center">
+            ▶ ACCEPT QUEST
+          </PixelButton>
+        </Link>
+        <Link to={PATHS.leaderboard(scenario.id)}>
+          <PixelButton variant="default" size="sm" className="shrink-0">
+            🏆
+          </PixelButton>
+        </Link>
+      </div>
     </PixelPanel>
   )
 }

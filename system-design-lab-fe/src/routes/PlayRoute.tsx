@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useSession, useSubmitChoice } from '@/features/session/hooks/useSession'
+import { abandonSession } from '@/features/session/api'
 import { MetricsPanel } from '@/features/metrics/components/MetricsPanel'
 import { PixelDialogue } from '@/components/pixel/PixelDialogue'
 import { PixelPanel } from '@/components/pixel/PixelPanel'
@@ -120,6 +121,8 @@ export function PlayRoute() {
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null)
   const [lastResult, setLastResult] = useState<SubmitChoiceResponse | null>(null)
   const [currentStep, setCurrentStep] = useState<Step | null>(null)
+  const [showHint, setShowHint] = useState(false)
+  const [isAbandoning, setIsAbandoning] = useState(false)
 
   const { data: session, isLoading, isError } = useSession(sessionId ?? '')
   const submitMutation = useSubmitChoice(sessionId ?? '')
@@ -149,6 +152,17 @@ export function PlayRoute() {
 
   const displayStep = currentStep ?? session.currentStep
 
+  async function handleAbandon() {
+    if (!sessionId) return
+    setIsAbandoning(true)
+    try {
+      await abandonSession(sessionId)
+      navigate(PATHS.quests)
+    } finally {
+      setIsAbandoning(false)
+    }
+  }
+
   async function handleSubmit() {
     if (!selectedChoiceId || !sessionId) return
 
@@ -175,6 +189,19 @@ export function PlayRoute() {
           <span className="text-xl">{displayStep.question}</span>
           {displayStep.context && (
             <p className="text-[var(--parchment-dim)] text-sm mt-2">{displayStep.context}</p>
+          )}
+          {displayStep.hint && (
+            <div className="mt-3">
+              <button
+                onClick={() => setShowHint((v) => !v)}
+                className="font-['Press_Start_2P'] text-[6px] text-[var(--gold)] underline cursor-pointer"
+              >
+                {showHint ? '▲ HIDE HINT' : '▼ SHOW HINT'}
+              </button>
+              {showHint && (
+                <p className="mt-2 text-[var(--gold)] text-sm italic">{displayStep.hint}</p>
+              )}
+            </div>
           )}
         </PixelDialogue>
 
@@ -217,6 +244,16 @@ export function PlayRoute() {
       {/* Metrics HUD */}
       <aside className="lg:w-56 flex flex-col gap-4">
         <MetricsPanel metrics={session.metrics} />
+
+        {session.mode === 'interview' && session.timeLimitSeconds != null && (
+          <PixelPanel variant="dark" className="text-center">
+            <p className="font-['Press_Start_2P'] text-[6px] text-[var(--blood)] mb-1">⏱ INTERVIEW</p>
+            <p className="font-['VT323'] text-xl text-[var(--gold)]">
+              {Math.max(0, session.timeLimitSeconds - session.timeElapsedSeconds)}s left
+            </p>
+          </PixelPanel>
+        )}
+
         <PixelPanel variant="dark" className="text-center">
           <p className="font-['Press_Start_2P'] text-[6px] text-[var(--parchment-dim)] mb-1">SESSION</p>
           <p className="font-['VT323'] text-sm text-[var(--parchment-dim)]">{sessionId.slice(0, 12)}...</p>
@@ -224,6 +261,16 @@ export function PlayRoute() {
             {session.status}
           </p>
         </PixelPanel>
+
+        <PixelButton
+          variant="blood"
+          size="sm"
+          className="w-full justify-center"
+          onClick={handleAbandon}
+          disabled={isAbandoning}
+        >
+          {isAbandoning ? '...' : '✗ ABANDON QUEST'}
+        </PixelButton>
       </aside>
     </div>
   )

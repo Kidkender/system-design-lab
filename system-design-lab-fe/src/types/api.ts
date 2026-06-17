@@ -40,6 +40,7 @@ export interface Step {
   id: string
   question: string
   context: string | null
+  hint: string | null
   choices: Choice[]
 }
 
@@ -51,7 +52,8 @@ export interface ScenarioDetail {
 }
 
 /* ---------- Session ---------- */
-export type SessionStatus = 'in_progress' | 'completed' | 'abandoned'
+export type SessionStatus = 'in_progress' | 'completed' | 'abandoned' | 'failed'
+export type SessionMode = 'normal' | 'interview'
 
 export type Metrics = Record<string, number>
 
@@ -62,6 +64,9 @@ export interface Session {
   metrics: Metrics
   flags: Record<string, boolean>
   status: SessionStatus
+  mode: SessionMode
+  timeLimitSeconds: number | null
+  timeElapsedSeconds: number
 }
 
 /* ---------- Submit Choice ---------- */
@@ -116,4 +121,40 @@ export interface CreateUserRequest {
 export interface StartSessionRequest {
   userId: string
   scenarioId: string
+  mode?: SessionMode
+}
+
+/* ---------- Leaderboard ---------- */
+export interface LeaderboardEntry {
+  rank: number
+  sessionId: string
+  userId: string
+  username: string
+  score: number
+  totalChoices: number
+  correctChoices: number
+  createdAt: string
+  completedAt: string
+}
+
+/* ---------- Progress ---------- */
+export interface UserProgressItem {
+  scenarioId: string
+  title: string
+  difficulty: string
+  attempts: number
+  completions: number
+  bestScore: number
+  lastCompletedAt: string | null
+}
+
+/* ---------- User Sessions ---------- */
+export interface UserSessionListItem {
+  id: string
+  scenarioId: string
+  status: SessionStatus
+  mode: SessionMode
+  score: number
+  createdAt: string
+  completedAt: string | null
 }
